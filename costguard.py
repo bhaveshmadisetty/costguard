@@ -241,7 +241,7 @@ def analyze(plan, pricing, group_by=None):
     return rows, warnings, skipped
 
 
-def render(rows, warnings, skipped, pricing, limit, markdown=False, group_by=None, json_mode=False, strict=False):
+def summarize(rows, warnings, skipped, pricing, limit, strict=False):
     old = sum((r['old'] for r in rows if r['old'] is not None), Decimal(0))
     new = sum((r['new'] for r in rows if r['new'] is not None), Decimal(0))
     delta = new-old
@@ -250,6 +250,12 @@ def render(rows, warnings, skipped, pricing, limit, markdown=False, group_by=Non
     result = dict(currency=pricing.currency, prior=old, proposed=new, delta=delta, threshold=limit,
                   status=verdict, exit_code=code, complete=not warnings, skipped=skipped,
                   cache_hits=pricing.hits, api_calls=pricing.calls, warnings=warnings, resources=rows)
+    return result
+
+
+def render(rows, warnings, skipped, pricing, limit, markdown=False, group_by=None, json_mode=False, strict=False):
+    result = summarize(rows,warnings,skipped,pricing,limit,strict)
+    old, new, delta, code, verdict = (result[k] for k in ('prior','proposed','delta','exit_code','status'))
     if json_mode:
         print(json.dumps(result, default=str, indent=2))
         return code

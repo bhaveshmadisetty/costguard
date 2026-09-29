@@ -2,7 +2,7 @@
 
 ## 1. What We Built
 
-CostGuard is a standalone Python CLI that consumes Terraform plan JSON from stdin or a file and estimates the monthly cost change for supported Azure resources. It retrieves actual Azure Retail Prices API meters, filters the pricing model and resource attributes, and stores successful responses in SQLite. It calculates create, delete, update and replacement deltas with decimal arithmetic, using 730 hours for hourly compute and native monthly units for managed disks. It prints a terminal table and budget verdict, supports Markdown, JSON, currencies and tag grouping, and uses exit codes suitable for a pipeline gate. Live API and offline-cache verification succeeded, while full-process Windows startup misses the 50 ms target and the supported-resource scope remains narrower than a complete Azure bill.
+CostGuard is a Python CLI and local browser app that consume Terraform plan JSON and estimate the monthly cost change for supported Azure resources. They retrieve actual Azure Retail Prices API meters, filter the pricing model and resource attributes, and store successful responses in SQLite. The shared engine calculates create, delete, update and replacement deltas with decimal arithmetic, using 730 hours for hourly compute and native monthly units for managed disks. The CLI prints a terminal table and budget verdict with CI exit codes; the browser page adds sample selection, file upload, budget controls, resource breakdown and pricing evidence. Live API and offline-cache verification succeeded, while full-process Windows startup misses the 50 ms target and the supported-resource scope remains narrower than a complete Azure bill.
 
 ## 2. Detection & Extraction Logic
 
@@ -77,6 +77,8 @@ The strict full-CLI under-50-ms requirement is **not met on this Windows environ
 ## 6. How to Run It
 
 No application dependencies need installing with Python 3.11+. On this machine use `py`, because `python` points to the Windows Store shortcut.
+
+For the local web interface, double-click `Run-CostGuard.bat` and keep its terminal open while the browser page is in use. It runs on `127.0.0.1` and calls the same pricing engine. No Azure VM or subscription is needed for the included samples.
 
 ```powershell
 py -m unittest discover -s tests -v

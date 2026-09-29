@@ -4,7 +4,7 @@ Estimate the monthly cost change in an Azure Terraform plan before deployment. C
 
 **You do not need an Azure VM or subscription.** The included test plans represent proposed changes; pricing comes from Microsoft's public API. Start with `costguard.cmd --plan test-plans\plan-a-small-add.json --max-increase 20` in Command Prompt to see a budget failure.
 
-For a menu you can double-click, open `Run-CostGuard.bat`. Choose a $20 or $50 monthly limit, or enter your own. The window shows the full report and waits for a key press before returning to the menu.
+For the local website interface, double-click `Run-CostGuard.bat`. It starts a server bound only to your computer and opens the site in your browser. Keep the small terminal window open while using the site; press Ctrl+C there to stop it. The page lets you choose sample plans or upload a `terraform show -json` file, set a monthly limit and currency, run the check, and inspect the Azure meter evidence. It shares the same pricing engine and SQLite cache as the CLI.
 
 ```text
 Terraform plan JSON -> resource before/after -> SQLite / live Azure prices

@@ -30,12 +30,12 @@ Run the tests and live demo on the exact laptop and network you will use. Activa
 
 ## Five-minute judging walkthrough
 
-1. Explain the problem: syntactically valid infrastructure changes can increase recurring cost before anyone notices.
-2. Run Plan A with a cleared cache. Explain why VM price is multiplied by 730 and disk price is already monthly.
-3. Repeat offline. Show two cache hits and zero API calls.
-4. Lower the budget to 20 and show `$LASTEXITCODE` is 1.
-5. Show upgrade/deletion, negative downsize savings, zero tags-only change and the hostile noise plan.
-6. Open the JSON evidence and point to a specific meter ID, query URL, unit and rate.
+1. Double-click `Run-CostGuard.bat` to open the local website. Explain the problem: valid infrastructure changes can increase recurring costs before anyone notices.
+2. Select Plan A, clear the price cache, set the limit to 50 and run it. Explain why VM price is multiplied by 730 and disk price is already monthly.
+3. Turn on "Use cached prices only" and repeat. Show two cache hits and zero API calls.
+4. Lower the limit to 20 and run it. Show the red budget verdict. The CLI runs the same engine and returns exit code 1 for this case.
+5. Select upgrade/deletion, downsize, tags-only and hostile-noise examples to show each lifecycle behavior.
+6. Expand "Pricing evidence" to show a specific meter ID, Azure query URL, unit and rate.
 7. Open REPORT.md and explain scope and timing limitations without overstating the tool.
 
 Use `scripts/demo.ps1` for the repeatable walkthrough. Avoid spending the demo on installation or on features that do not earn rubric marks.

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CostGuard | Azure plan cost check</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">$</span><span>CostGuard</span></div>
+    <span class="top-note">Terraform plan → Azure prices → budget decision</span>
+    <span class="local-pill">Running locally</span>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <p class="eyebrow">Azure infrastructure cost impact predictor</p>
+      <h1>Know the cost before you deploy.</h1>
+      <p>Check a sample Terraform plan or upload your own plan JSON. CostGuard looks up live Azure retail prices, calculates the monthly change, and checks it against your budget.</p>
+      <div class="intro-facts"><span>No Azure account needed</span><span>No VM created</span><span>Prices cached locally</span></div>
+    </section>
+
+    <div class="workspace">
+      <section class="panel controls" aria-labelledby="config-title">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Step 1</p><h2 id="config-title">Set up your check</h2></div>
+        </div>
+        <form id="run-form">
+          <fieldset class="source-picker">
+            <legend>Plan source</legend>
+            <label class="radio-card"><input type="radio" name="source" value="sample" checked><span><strong>Use a sample</strong><small>Explore the hackathon cases</small></span></label>
+            <label class="radio-card"><input type="radio" name="source" value="upload"><span><strong>Upload plan JSON</strong><small>From terraform show -json</small></span></label>
+          </fieldset>
+
+          <div id="sample-fields" class="field-group">
+            <label for="sample">Sample plan</label>
+            <select id="sample" name="sample">
+              <option value="plan-a-small-add">Create VM + managed disk</option>
+              <option value="plan-b-upgrade-delete">Upgrade VM + delete VM</option>
+              <option value="01-create">Create a VM</option>
+              <option value="02-delete">Delete a VM</option>
+              <option value="03-upgrade">Upgrade a VM</option>
+              <option value="04-hostile-noise">15 free resources</option>
+              <option value="05-tags-only">Change tags only</option>
+              <option value="06-replace">Replace a VM</option>
+              <option value="07-downgrade">Downsize a VM</option>
+            </select>
+            <p class="help">The sample describes a proposed change. It does not deploy anything.</p>
+          </div>
+
+          <div id="upload-fields" class="field-group" hidden>
+            <label for="plan-file">Terraform plan JSON</label>
+            <input id="plan-file" type="file" accept=".json,application/json">
+            <p class="help">Generate with <code>terraform show -json tfplan.binary &gt; plan.json</code>. Maximum 10 MB.</p>
+          </div>
+
+          <div class="two-fields">
+            <div class="field-group"><label for="limit">Max monthly increase</label><input id="limit" type="number" min="0" step="0.01" value="20" required><p class="help">The check fails above this amount.</p></div>
+            <div class="field-group"><label for="currency">Currency</label><select id="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>INR</option></select><p class="help">Requested from the Azure API.</p></div>
+          </div>
+
+          <label class="check-row"><input id="offline" type="checkbox"><span>Use cached prices only <small>Useful for an offline demo after one live run</small></span></label>
+          <button class="primary-button" id="run-button" type="submit">Run cost check <span aria-hidden="true">→</span></button>
+          <p id="form-message" class="form-message" role="alert" hidden></p>
+        </form>
+      </section>
+
+      <section class="panel results" aria-labelledby="results-title">
+        <div class="panel-heading results-heading">
+          <div><p class="eyebrow">Step 2</p><h2 id="results-title">Cost impact report</h2></div>
+          <button id="clear-cache" class="text-button" type="button">Clear price cache</button>
+        </div>
+        <div id="empty-state" class="empty-state">
+          <div class="empty-icon">↗</div>
+          <h3>Ready to check a plan</h3>
+          <p>Choose a sample on the left and select <strong>Run cost check</strong>. The report will appear here.</p>
+        </div>
+        <div id="report" hidden>
+          <div id="verdict" class="verdict" role="status"><span id="verdict-icon" class="verdict-icon"></span><div><strong id="verdict-title"></strong><p id="verdict-message"></p></div></div>
+          <div class="metrics">
+            <div><span>Prior monthly cost</span><strong id="prior-cost"></strong></div>
+            <div><span>Projected monthly cost</span><strong id="new-cost"></strong></div>
+            <div class="highlight-metric"><span>Net monthly impact</span><strong id="delta-cost"></strong></div>
+          </div>
+          <div class="report-subhead"><h3>Resource breakdown</h3><span id="resource-count"></span></div>
+          <div class="table-scroll"><table><thead><tr><th>Resource</th><th>Action</th><th>Region</th><th>SKU / meter</th><th>Old / mo</th><th>New / mo</th><th>Delta / mo</th></tr></thead><tbody id="resource-body"></tbody></table></div>
+          <div id="proofs" class="proofs"></div>
+          <div id="warnings" class="warnings" hidden><strong>Items needing attention</strong><ul id="warning-list"></ul></div>
+          <div class="report-footer"><span id="cache-stat"></span><span id="skip-stat"></span><span id="budget-stat"></span></div>
+          <p class="scope-note">Estimate covers supported changed resources at retail rates. It is not a full Azure invoice.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
