@@ -8,6 +8,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
 API = 'https://prices.azure.com/api/retail/prices'
+CACHE_TTL_SECONDS = 24 * 60 * 60
 FREE = {'azurerm_resource_group', 'azurerm_virtual_network', 'azurerm_subnet',
         'azurerm_network_security_group', 'azurerm_network_security_rule',
         'azurerm_network_interface', 'azurerm_subnet_network_security_group_association'}
@@ -90,6 +91,7 @@ class Pricing:
             PRIMARY KEY (sku,region,currency))''')
         self.currency, self.timeout, self.offline, self.transport, self.retries = currency, timeout, offline, transport, retries
         self.refresh = refresh
+        self.warnings = []
         self.hits = self.calls = 0
         self.failed = {}
 
@@ -97,15 +99,29 @@ class Pricing:
         self.db.execute('DELETE FROM pricing_cache')
         self.db.commit()
 
+    def warn(self, message):
+        if message not in self.warnings:
+            self.warnings.append(message)
+
+    def stale_result(self, item, cached):
+        self.hits += 1
+        self.warn(f"Azure refresh failed for {item['sku']}; using the saved price from {time.strftime('%Y-%m-%d', time.localtime(cached[2]))}.")
+        return self.result(json.loads(cached[0]), cached[1], cached[2], 'stale-cache')
+
     def rate(self, item):
         key = json.dumps({k:v for k,v in item.items() if k != 'region'}, sort_keys=True)
         cached = self.db.execute('SELECT raw_json,source_url,cached_at FROM pricing_cache WHERE sku=? AND region=? AND currency=?',
                                  (key,item['region'],self.currency)).fetchone()
-        if cached and not self.refresh:
+        stale = bool(cached and time.time() - cached[2] >= CACHE_TTL_SECONDS)
+        if cached and not self.refresh and (not stale or self.offline):
             self.hits += 1
-            return self.result(json.loads(cached[0]), cached[1], cached[2], 'cache')
+            if stale:
+                self.warn(f"Saved Azure price for {item['sku']} is older than 24 hours; offline mode is using it.")
+            return self.result(json.loads(cached[0]), cached[1], cached[2], 'stale-cache' if stale else 'cache')
         failure_key = (key,item['region'],self.currency)
         if failure_key in self.failed:
+            if cached:
+                return self.stale_result(item, cached)
             raise Unpriced(self.failed[failure_key])
         try:
             if self.offline:
@@ -147,6 +163,8 @@ class Pricing:
         except (OSError, ValueError, KeyError, TypeError, InvalidOperation, Unpriced) as error:
             message = ('Network unavailable: ' if isinstance(error, OSError) else '') + str(error)
             self.failed[failure_key] = message
+            if cached and (message.startswith('Network unavailable:') or isinstance(error, OSError)):
+                return self.stale_result(item, cached)
             raise Unpriced(message) from error
 
     def request(self, url):
@@ -245,6 +263,7 @@ def analyze(plan, pricing, group_by=None):
                          region=' -> '.join(dict.fromkeys(regions)), sku=' -> '.join(dict.fromkeys(labels)) or '?',
                          old=costs[0], new=costs[1], delta=None if None in costs else costs[1]-costs[0],
                          group=str(tags.get(group_by,'(untagged)')) if group_by else '', proofs=proofs))
+    warnings.extend(pricing.warnings)
     return rows, warnings, skipped
 
 

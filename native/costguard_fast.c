@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <process.h>
 #include <windows.h>
 #include "sqlite3.h"
@@ -107,7 +108,7 @@ static int disk_tier(int size,char *tier) {
 
 static int cached_price(const char *key,const char *region,const char *currency,int64_t *out) {
     sqlite3_stmt *stmt=NULL;
-    const char *sql="SELECT json_extract(raw_json,'$.retailPrice'), json_extract(raw_json,'$.unitOfMeasure') "
+    const char *sql="SELECT json_extract(raw_json,'$.retailPrice'), json_extract(raw_json,'$.unitOfMeasure'), cached_at "
                     "FROM pricing_cache WHERE sku=?1 AND region=?2 AND currency=?3";
     if (sqlite3_prepare_v2(db,sql,-1,&stmt,NULL)!=SQLITE_OK) return 0;
     sqlite3_bind_text(stmt,1,key,-1,SQLITE_TRANSIENT);
@@ -118,8 +119,10 @@ static int cached_price(const char *key,const char *region,const char *currency,
         int ok=1;
         const char *price=(const char*)sqlite3_column_text(stmt,0);
         const char *unit=(const char*)sqlite3_column_text(stmt,1);
+        sqlite3_int64 cached_at=sqlite3_column_int64(stmt,2);
         int64_t value=fixed(price,&ok);
-        if (unit && ok && value>=0) {
+        int expired=(sqlite3_int64)time(NULL)-cached_at>=86400;
+        if (unit && ok && value>=0 && !expired) {
             if (!strcmp(unit,"1 Hour") && value<INT64_MAX/730) { *out=value*730; found=1; }
             else if (!strcmp(unit,"1/Month")) { *out=value; found=1; }
         }
@@ -276,7 +279,7 @@ static int python_fallback(int argc,char **argv) {
 
 int main(int argc,char **argv) {
     const char *plan_path=NULL,*cache_path="pricing_cache.db",*currency="USD",*threshold="50";
-    int fallback=0;
+    int fallback=0,offline=0;
     for (int i=1;i<argc;i++) {
         if ((!strcmp(argv[i],"--plan") || !strcmp(argv[i],"--cache") ||
              !strcmp(argv[i],"--currency") || !strcmp(argv[i],"--max-increase")) && i+1<argc) {
@@ -285,7 +288,9 @@ int main(int argc,char **argv) {
             else if (!strcmp(flag,"--cache")) cache_path=argv[i];
             else if (!strcmp(flag,"--currency")) currency=argv[i];
             else threshold=argv[i];
-        } else if (!strcmp(argv[i],"--offline") || !strcmp(argv[i],"--strict")) {
+        } else if (!strcmp(argv[i],"--offline")) {
+            offline=1;
+        } else if (!strcmp(argv[i],"--strict")) {
         } else fallback=1;
     }
     if (fallback || !simple(currency)) return python_fallback(argc,argv);

@@ -65,7 +65,7 @@
           </div>
 
           <label class="check-row"><input id="offline" type="checkbox"><span>Use cached prices only <small>Useful for an offline demo after one live run</small></span></label>
-          <label class="check-row"><input id="refresh" type="checkbox"><span>Fetch fresh prices from Azure <small>Queries https://prices.azure.com/api/retail/prices and updates the local cache</small></span></label>
+          <label class="check-row"><input id="refresh" type="checkbox"><span>Fetch fresh prices from Azure <small>Otherwise prices older than 24 hours refresh automatically when you run a check</small></span></label>
           <button class="primary-button" id="run-button" type="submit">Run cost check <span aria-hidden="true">→</span></button>
           <p id="form-message" class="form-message" role="alert" hidden></p>
         </form>

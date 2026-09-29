@@ -68,7 +68,7 @@ Warm those prices once with a live run before using `--offline`. The AzureRM tes
 | `--cache FILE` | SQLite location; default `pricing_cache.db` in current directory |
 | `--clear-cache` | Remove cached rates before running; also works alone |
 | `--offline` | Use cached prices only; uncached SKUs display `$0.00` with a warning and an incomplete verdict |
-| `--refresh` | Query current matching prices from `https://prices.azure.com/api/retail/prices` and replace saved prices |
+| `--refresh` | Query current matching prices from `https://prices.azure.com/api/retail/prices` and replace saved prices; by default, prices auto-refresh when older than 24 hours |
 | `--strict` | Exit 2 when any changed resource cannot be priced completely |
 | `--timeout 10` | HTTP timeout in seconds |
 | `--retries 2` | Retry transient API timeouts and 429/5xx responses; default 2 |

@@ -54,7 +54,8 @@ function addEvidence(resource) {
     item.className = 'proof-item';
     const meter = proof.meter;
     const side = resource.proofs[0] === proof ? 'Before' : 'After';
-    item.textContent = `${side}: ${meter.productName} / ${meter.meterName} · ${meter.retailPrice} ${meter.currencyCode} per ${meter.unitOfMeasure} · meter ID ${meter.meterId} · ${proof.source === 'cache' ? 'SQLite cache' : 'Azure API'} · `;
+    const source = proof.source === 'api' ? 'Azure API' : proof.source === 'stale-cache' ? 'stale SQLite cache' : 'SQLite cache';
+    item.textContent = `${side}: ${meter.productName} / ${meter.meterName} · ${meter.retailPrice} ${meter.currencyCode} per ${meter.unitOfMeasure} · meter ID ${meter.meterId} · ${source} · `;
     const link = document.createElement('a');
     link.href = proof.source_url;
     link.target = '_blank';
