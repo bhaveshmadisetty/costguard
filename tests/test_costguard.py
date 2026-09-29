@@ -82,6 +82,18 @@ class CostGuardTests(unittest.TestCase):
         self.assertEqual((q.hits,q.calls),(1,0))
         q.clear()
         self.assertEqual(q.db.execute('SELECT count(*) FROM pricing_cache').fetchone()[0],0)
+    def test_cache_first_default_and_opt_in_auto_refresh(self):
+        item=c.spec('azurerm_linux_virtual_machine',vm())
+        self.pricing().rate(item)
+        old=int(c.time.time())-172800
+        self.prices[-1].db.execute('UPDATE pricing_cache SET cached_at=?',(old,))
+        self.prices[-1].db.commit()
+        cached=self.pricing(transport=lambda *_:self.fail('Default cache-first lookup made a network request'))
+        self.assertEqual(cached.rate(item)['source'],'cache')
+        self.assertEqual(cached.calls,0)
+        refreshed=self.pricing([meter(price='0.02')],auto_refresh_hours=24)
+        self.assertEqual(refreshed.rate(item)['monthly'],Decimal('14.60'))
+        self.assertEqual(refreshed.calls,1)
     def test_currency_isolation(self):
         item=c.spec('azurerm_linux_virtual_machine',vm())
         self.pricing().rate(item)

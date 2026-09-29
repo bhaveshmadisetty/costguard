@@ -1,6 +1,7 @@
 """CostGuard: auditable Azure Terraform cost deltas, using only Python's standard library."""
 import argparse
 import json
+import os
 import sqlite3
 import sys
 import time
@@ -8,7 +9,6 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
 API = 'https://prices.azure.com/api/retail/prices'
-CACHE_TTL_SECONDS = 24 * 60 * 60
 FREE = {'azurerm_resource_group', 'azurerm_virtual_network', 'azurerm_subnet',
         'azurerm_network_security_group', 'azurerm_network_security_rule',
         'azurerm_network_interface', 'azurerm_subnet_network_security_group_association'}
@@ -82,7 +82,8 @@ def fetch(url, timeout):
 
 
 class Pricing:
-    def __init__(self, path, currency='USD', timeout=10, offline=False, transport=fetch, retries=2, refresh=False):
+    def __init__(self, path, currency='USD', timeout=10, offline=False, transport=fetch, retries=2,
+                 refresh=False, auto_refresh_hours=0):
         self.db = sqlite3.connect(path)
         self.db.execute('''CREATE TABLE IF NOT EXISTS pricing_cache (
             sku TEXT NOT NULL, region TEXT NOT NULL, currency TEXT NOT NULL,
@@ -91,6 +92,7 @@ class Pricing:
             PRIMARY KEY (sku,region,currency))''')
         self.currency, self.timeout, self.offline, self.transport, self.retries = currency, timeout, offline, transport, retries
         self.refresh = refresh
+        self.auto_refresh_hours = auto_refresh_hours
         self.warnings = []
         self.hits = self.calls = 0
         self.failed = {}
@@ -112,11 +114,12 @@ class Pricing:
         key = json.dumps({k:v for k,v in item.items() if k != 'region'}, sort_keys=True)
         cached = self.db.execute('SELECT raw_json,source_url,cached_at FROM pricing_cache WHERE sku=? AND region=? AND currency=?',
                                  (key,item['region'],self.currency)).fetchone()
-        stale = bool(cached and time.time() - cached[2] >= CACHE_TTL_SECONDS)
+        stale = bool(cached and self.auto_refresh_hours and
+                     time.time() - cached[2] >= self.auto_refresh_hours * 60 * 60)
         if cached and not self.refresh and (not stale or self.offline):
             self.hits += 1
             if stale:
-                self.warn(f"Saved Azure price for {item['sku']} is older than 24 hours; offline mode is using it.")
+                self.warn(f"Saved Azure price for {item['sku']} is older than {self.auto_refresh_hours} hours; offline mode is using it.")
             return self.result(json.loads(cached[0]), cached[1], cached[2], 'stale-cache' if stale else 'cache')
         failure_key = (key,item['region'],self.currency)
         if failure_key in self.failed:
@@ -285,9 +288,16 @@ def render(rows, warnings, skipped, pricing, limit, markdown=False, group_by=Non
     if json_mode:
         print(json.dumps(result, default=str, indent=2))
         return code
-    print('COSTGUARD: Azure Infrastructure Cost Impact Report')
-    print(f'Changed supported resources only | {pricing.currency}/month | VM baseline: 730 hours')
-    headers = ['Resource Address','Action','Region','SKU / Meter','Old','New','Delta']
+    color = sys.stdout.isatty() and os.name != 'nt' and 'NO_COLOR' not in os.environ
+    green, red, amber, reset = (('\033[32m','\033[31m','\033[33m','\033[0m') if color else ('','','',''))
+    print('+' + '='*78 + '+')
+    print('| COSTGUARD  /  AZURE COST IMPACT CHECK' + ' '*39 + '|')
+    print('+' + '='*78 + '+')
+    print(f'  Monthly estimate in {pricing.currency}  |  VM runtime: 730 hours  |  Changed supported resources')
+    print()
+    print('COST BREAKDOWN')
+    headers = ['Resource Address','Action','Region','SKU / Meter',f'Old ({pricing.currency}/mo)',
+               f'New ({pricing.currency}/mo)',f'Delta ({pricing.currency}/mo)']
     table = []
     for row in rows:
         table.append([row['address'],row['action'],row['region'],row['sku']] +
@@ -302,16 +312,20 @@ def render(rows, warnings, skipped, pricing, limit, markdown=False, group_by=Non
     else:
         widths = [max(len(str(row[i])) for row in [headers]+table) for i in range(len(headers))]
         print('  '.join(s.ljust(w) for s,w in zip(headers,widths)))
-        print('-' * (sum(widths)+12))
+        print('  '.join('-'*w for w in widths))
         for row in table:
             print('  '.join(str(s).ljust(w) for s,w in zip(row,widths)))
     if group_by:
         for group in sorted({r['group'] for r in rows}):
             total = sum((r['delta'] for r in rows if r['group']==group and r['delta'] is not None),Decimal(0))
             print(f'{group_by}={group}: {money(total)}/mo (known delta)')
-    print(f'Prior: {money(old)} | Proposed: {money(new)} | Net impact: {money(delta)}/mo')
-    print(f'Cache: {pricing.hits} hits, {pricing.calls} API requests | Skipped free/unchanged: {skipped}')
-    print(f'Budget threshold: {money(limit)} | Status: {verdict} | Exit: {code}')
+    print()
+    print('BUDGET DECISION')
+    status_color = green if verdict == 'PASSED' else red if verdict == 'FAILED' else amber
+    print(f'  Status: {status_color}{verdict}{reset}  |  Exit code: {code}')
+    print(f'  Monthly impact: {money(delta)} {pricing.currency}  |  Budget limit: {money(limit)} {pricing.currency}')
+    print(f'  Prior: {money(old)} {pricing.currency}  |  Proposed: {money(new)} {pricing.currency}')
+    print(f'  Cache: {pricing.hits} hits, {pricing.calls} API requests  |  Skipped free/unchanged: {skipped}')
     for warning in warnings:
         print('[WARN] ' + warning, file=sys.stderr)
     if warnings:
@@ -328,6 +342,8 @@ def main(argv=None):
     parser.add_argument('--clear-cache', action='store_true')
     parser.add_argument('--offline', action='store_true')
     parser.add_argument('--refresh', action='store_true', help='Fetch current Azure prices instead of using saved prices')
+    parser.add_argument('--auto-refresh-hours', type=int, default=0,
+                        help='Opt in to refreshing saved prices older than this many hours (default: disabled)')
     parser.add_argument('--strict', action='store_true', help='Exit 2 on incomplete pricing')
     parser.add_argument('--timeout', type=float, default=10)
     parser.add_argument('--retries', type=int, default=2, help='Retries for transient API failures; default 2')
@@ -345,7 +361,12 @@ def main(argv=None):
             raise ValueError('--retries must be between 0 and 5')
         if args.offline and args.refresh:
             raise ValueError('--refresh cannot be combined with --offline')
-        pricing = Pricing(args.cache, args.currency, args.timeout, args.offline, retries=args.retries, refresh=args.refresh)
+        if args.auto_refresh_hours < 0 or args.auto_refresh_hours > 8760:
+            raise ValueError('--auto-refresh-hours must be between 0 and 8760')
+        if args.offline and args.auto_refresh_hours:
+            raise ValueError('--auto-refresh-hours cannot be combined with --offline')
+        pricing = Pricing(args.cache, args.currency, args.timeout, args.offline, retries=args.retries,
+                          refresh=args.refresh, auto_refresh_hours=args.auto_refresh_hours)
         if args.clear_cache:
             pricing.clear()
             if args.plan is None and sys.stdin.isatty():

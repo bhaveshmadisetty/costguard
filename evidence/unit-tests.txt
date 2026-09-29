@@ -1,3 +1,4 @@
+test_cache_first_default_and_opt_in_auto_refresh (test_costguard.CostGuardTests.test_cache_first_default_and_opt_in_auto_refresh) ... ok
 test_cache_persists_without_network (test_costguard.CostGuardTests.test_cache_persists_without_network) ... ok
 test_computed_disk_tier_with_known_size (test_costguard.CostGuardTests.test_computed_disk_tier_with_known_size) ... ok
 test_currency_isolation (test_costguard.CostGuardTests.test_currency_isolation) ... ok
@@ -26,6 +27,6 @@ test_upload_and_invalid_budget (test_web.WebTests.test_upload_and_invalid_budget
 test_offline_uncached_fallback_preserves_strict_exit_code (test_windows_launcher.WindowsLauncherTests.test_offline_uncached_fallback_preserves_strict_exit_code) ... ok
 
 ----------------------------------------------------------------------
-Ran 26 tests in 2.187s
+Ran 27 tests in 2.235s
 
 OK

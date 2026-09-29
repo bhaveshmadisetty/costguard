@@ -68,7 +68,8 @@ Warm those prices once with a live run before using `--offline`. The AzureRM tes
 | `--cache FILE` | SQLite location; default `pricing_cache.db` in current directory |
 | `--clear-cache` | Remove cached rates before running; also works alone |
 | `--offline` | Use cached prices only; uncached SKUs display `$0.00` with a warning and an incomplete verdict |
-| `--refresh` | Query current matching prices from `https://prices.azure.com/api/retail/prices` and replace saved prices; by default, prices auto-refresh when older than 24 hours |
+| `--refresh` | Force a live lookup from `https://prices.azure.com/api/retail/prices` and replace saved prices |
+| `--auto-refresh-hours 24` | Opt in to refreshing a saved rate after the selected age; disabled by default to preserve the handout's cache-first rule |
 | `--strict` | Exit 2 when any changed resource cannot be priced completely |
 | `--timeout 10` | HTTP timeout in seconds |
 | `--retries 2` | Retry transient API timeouts and 429/5xx responses; default 2 |
@@ -89,7 +90,7 @@ Calculations use decimal arithmetic and unrounded values for the threshold. Disp
 - Consumption-only filtering excludes reservation, Dev/Test, Low Priority, wrong OS, wrong currency and wrong region meters. Spot is excluded unless explicitly requested by the plan. Pagination is followed and ambiguous results are warned rather than guessed.
 - A partially priced update is excluded as a whole so a missing new price cannot become a false saving.
 
-VM estimates cover compute meters only: embedded OS disks, network traffic, software licensing beyond the selected VM meter, taxes, discounts and other usage-based charges are outside scope. Cache rates remain until explicitly cleared; refresh before a final live demo. Tag groups use the proposed tag, or the prior tag for deletion.
+VM estimates cover compute meters only: embedded OS disks, network traffic, software licensing beyond the selected VM meter, taxes, discounts and other usage-based charges are outside scope. By default, cached rates are returned immediately until explicitly cleared or refreshed with `--refresh`. Opt-in automatic refresh is available with `--auto-refresh-hours`; it remains off by default for the hackathon's strict cache-first behavior. Tag groups use the proposed tag, or the prior tag for deletion.
 
 ## Verification and demo
 

@@ -4,7 +4,7 @@
 
 Confirm whether prewritten implementation code is permitted. The handout explicitly permits environment setup and preparation of test plans; it does not explicitly authorize bringing a completed implementation. Treat this repository as preparation/reference until the organizer confirms the rules.
 
-Run the tests and live demo on the exact laptop and network you will use. Activate the local tools using `. .\activate.ps1`. Understand `costguard.py` well enough to explain its filters, cache identity, units, action matrix and exit codes. Keep the cache warm for an offline backup, but show a fresh lookup when demonstrating live pricing.
+Run the live demo on the exact laptop and network you will use. Activate the local tools using `. .\activate.ps1`. Understand `costguard.py` well enough to explain its filters, cache identity, units, action matrix and exit codes. Keep the cache warm for an offline backup, but use `--refresh` or the website's fresh-prices option to demonstrate a live lookup. Cached prices are returned immediately by default, in line with the handout.
 
 ## Build priorities (100 marks)
 
@@ -31,9 +31,17 @@ Run the tests and live demo on the exact laptop and network you will use. Activa
 ## Five-minute judging walkthrough
 
 1. Double-click `Run-CostGuard.bat` to open the local website. Explain the problem: valid infrastructure changes can increase recurring costs before anyone notices.
-2. Select Plan A, clear the price cache, set the limit to 50 and run it. Explain why VM price is multiplied by 730 and disk price is already monthly.
-3. Turn on "Use cached prices only" and repeat. Show two cache hits and zero API calls.
-4. Lower the limit to 20 and run it. Show the red budget verdict. The CLI runs the same engine and returns exit code 1 for this case.
+2. Select Terraform Azure create, clear the price cache and run it with a 50 limit. Explain why VM price is multiplied by 730 and disk price is already monthly.
+3. In Command Prompt, show the polished CLI report and the same plan's budget decision:
+
+   ```bat
+   costguard.exe --plan test-plans\terraform-azure-create.json --offline --max-increase 50
+   costguard.exe --plan test-plans\terraform-azure-create.json --offline --max-increase 20
+   echo %ERRORLEVEL%
+   ```
+
+   The first command passes; the second prints `FAILED` and exits 1.
+4. Turn on "Use cached prices only" in the website and repeat. Show two cache hits and zero API calls.
 5. Select the Terraform-generated Azure create, upgrade and deletion samples. Explain that Terraform's planner produced them with a mocked AzureRM provider, so no subscription was needed. Then show downsize, tags-only and hostile-noise examples.
 6. Expand "Pricing evidence" to show a specific meter ID, Azure query URL, unit and rate.
 7. Run `py scripts/benchmark_native.py` and show the complete warm-cache CLI launch time in `evidence/native-benchmark.json`. Open REPORT.md and explain the supported-resource scope.
@@ -48,7 +56,7 @@ Use `scripts/demo.ps1` for the repeatable walkthrough. Avoid spending the demo o
 - **What if new size is unknown?** Mark the estimate incomplete, never turn a missing new price into false savings.
 - **Why SQLite?** Persistent local cache between CLI launches; inspectable, no external service.
 - **Does it predict the full invoice?** No. It estimates retail recurring cost for supported changed resources under stated usage assumptions.
-- **Is it under 50 ms?** The second complete native Windows launch measured 14.711 ms here. Re-run the benchmark on the judging machine; the Python fallback is slower.
+- **Is it under 50 ms?** The second complete native Windows launch measured 11.908 ms here. Re-run the benchmark on the judging machine; the Python fallback is slower.
 - **Are the Azure plans real?** Terraform generated create, update and delete plans for actual AzureRM resource schemas. The provider was mocked, so no live Azure infrastructure was provisioned.
 
 ## Submission checklist

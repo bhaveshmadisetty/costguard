@@ -18,7 +18,7 @@ Known free types, data sources and no-op resources are skipped. Unsupported pote
 |---|---|
 | Live API versus static rates | Public Microsoft endpoint; runtime never uses hardcoded prices. Evidence retains selected meters and exact queries. |
 | Cache | SQLite `pricing_cache`, keyed by serialized pricing identity, region, currency; records also contain normalized hourly rate, timestamp, original meter JSON and URL. Identity includes service, OS and priority to prevent collisions. |
-| Cache-first semantics | Read a saved price while it is less than 24 hours old; older prices refresh from Azure on the next check. `--refresh` bypasses saved entries immediately. Offline mode uses the saved price and warns when it is stale. If a live refresh fails, a stale saved price is used with a warning; without a saved price, the incomplete-price behavior applies. |
+| Cache-first semantics | Every lookup reads SQLite first and immediately returns a saved rate without an HTTP request, as required. `--refresh` explicitly bypasses the cache. Optional `--auto-refresh-hours` refreshes rates past a selected age; it is disabled by default. |
 | Meter filters | Exact service, region, SKU/product, currency and Consumption type; exclude Low Priority and unintended Spot/Windows; validate billing units and zero tier minimum; follow pagination. |
 | Regional meters | Do not require `isPrimaryMeterRegion=true`: live eastus D2s_v3 regular Consumption records returned false. All required identity filters still apply. |
 | Ambiguity | Multiple matching meter IDs produce an incomplete result. For one meter ID, select the latest effective nonfuture record. |
@@ -59,16 +59,16 @@ An actual Terraform 1.16.4 output-only configuration was planned to a binary, co
 |---|---:|---:|---:|
 | Fresh Python process, full JSON report, offline cache; excludes `py` launcher | 10 | 248.474 ms | 483.871 ms |
 | In-process `main`, argument parsing, file read, SQLite, math, terminal rendering | 20 | 1.799 ms | 2.582 ms |
-| Complete native Windows launch, Terraform-generated Azure create plan, cached report | 30 | 13.846 ms | 22.103 ms |
+| Complete native Windows launch, Terraform-generated Azure create plan, cached report | 30 | 11.311 ms | 19.023 ms |
 
-The **second complete native run was 14.711 ms**, below 50 ms on this Windows machine. All 30 measured native runs were below 50 ms; this includes process launch, plan read, SQLite lookups, cost math and terminal output. The Python-only process remains above 50 ms, so use `costguard.exe` (selected by `costguard.cmd`) for the timed warm-cache demonstration. Zero HTTP calls on this path is met. Machine load can affect individual timings. Raw samples are in `evidence/native-benchmark.json`; Python measurements remain in the earlier evidence files.
+The **second complete native run was 11.908 ms**, below 50 ms on this Windows machine. All 30 measured native runs were below 50 ms; this includes process launch, plan read, SQLite lookups, cost math and terminal output. The Python-only process remains above 50 ms, so use `costguard.exe` (selected by `costguard.cmd`) for the timed warm-cache demonstration. Zero HTTP calls on this path is met. Machine load can affect individual timings. Raw samples are in `evidence/native-benchmark.json`; Python measurements remain in the earlier evidence files.
 
 ## 5. Limitations & Next Steps
 
 1. Re-run `py scripts/benchmark_native.py` on the judging machine; Windows process timing depends on that machine and its background load. The native fast path covers supported cached plans and falls back to Python for misses and advanced options.
 2. Support embedded OS disks, additional storage classes, usage-based networking, discounts and more resource families. Current totals cover supported changed resources only.
 3. Validate against an authenticated Azure `terraform show -json` plan if the organizer supplies credentials and infrastructure. The included Azure lifecycle plans came from Terraform's AzureRM provider mock; no Azure resources were provisioned.
-4. Cache has explicit refresh, no TTL; old cached rates can differ from current retail prices. Add configurable expiry without violating offline/cache-first behavior.
+4. Cache has no expiry by default, matching the handout's cache-first rule. Opt-in `--auto-refresh-hours 24` or manual `--refresh` updates saved prices; a failed refresh reuses an existing saved rate with a warning.
 5. Offline uncached and network-unavailable SKUs display `$0.00` as requested, with an explicit warning and `INCOMPLETE` verdict. Default mode exits 0 if no known budget breach; `--strict` exits 2. An unknown SKU for other reasons remains unpriced. Never treat the displayed zero as evidence that a SKU is free.
 6. Disk inclusion is ambiguous in the handout; this implementation covers Plan A's P10 Premium disk, using Microsoft's actual monthly unit.
 7. Tag grouping uses proposed tags (prior tags for deletion); it is not a full reallocation ledger for moves between teams.

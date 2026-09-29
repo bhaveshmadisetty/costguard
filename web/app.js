@@ -3,10 +3,16 @@ const form = $('run-form');
 const button = $('run-button');
 
 $('offline').addEventListener('change', () => {
-  if ($('offline').checked) $('refresh').checked = false;
+  if ($('offline').checked) {
+    $('refresh').checked = false;
+    $('auto-refresh').checked = false;
+  }
 });
 $('refresh').addEventListener('change', () => {
   if ($('refresh').checked) $('offline').checked = false;
+});
+$('auto-refresh').addEventListener('change', () => {
+  if ($('auto-refresh').checked) $('offline').checked = false;
 });
 
 function selectedSource() {
@@ -144,7 +150,8 @@ form.addEventListener('submit', async event => {
     max_increase: limit,
     currency: $('currency').value,
     offline: $('offline').checked,
-    refresh: $('refresh').checked
+    refresh: $('refresh').checked,
+    auto_refresh: $('auto-refresh').checked
   };
   try {
     if (request.source === 'sample') {

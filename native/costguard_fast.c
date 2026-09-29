@@ -5,10 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <process.h>
 #include <windows.h>
 #include "sqlite3.h"
+
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
 
 #define SCALE 100000000LL
 #define MAX_INPUT (64*1024*1024)
@@ -71,6 +74,13 @@ static void amount(int64_t value,char *out,size_t size) {
              (unsigned long long)(cents%100));
 }
 
+static int enable_colors(void) {
+    HANDLE handle=GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode=0;
+    return handle!=INVALID_HANDLE_VALUE && GetConsoleMode(handle,&mode) &&
+           SetConsoleMode(handle,mode|ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+}
+
 static int simple(const char *s) {
     if (!s || !*s) return 0;
     for (;*s;s++) if (!isalnum((unsigned char)*s) && *s!='_' && *s!='-') return 0;
@@ -108,7 +118,7 @@ static int disk_tier(int size,char *tier) {
 
 static int cached_price(const char *key,const char *region,const char *currency,int64_t *out) {
     sqlite3_stmt *stmt=NULL;
-    const char *sql="SELECT json_extract(raw_json,'$.retailPrice'), json_extract(raw_json,'$.unitOfMeasure'), cached_at "
+    const char *sql="SELECT json_extract(raw_json,'$.retailPrice'), json_extract(raw_json,'$.unitOfMeasure') "
                     "FROM pricing_cache WHERE sku=?1 AND region=?2 AND currency=?3";
     if (sqlite3_prepare_v2(db,sql,-1,&stmt,NULL)!=SQLITE_OK) return 0;
     sqlite3_bind_text(stmt,1,key,-1,SQLITE_TRANSIENT);
@@ -119,10 +129,8 @@ static int cached_price(const char *key,const char *region,const char *currency,
         int ok=1;
         const char *price=(const char*)sqlite3_column_text(stmt,0);
         const char *unit=(const char*)sqlite3_column_text(stmt,1);
-        sqlite3_int64 cached_at=sqlite3_column_int64(stmt,2);
         int64_t value=fixed(price,&ok);
-        int expired=(sqlite3_int64)time(NULL)-cached_at>=86400;
-        if (unit && ok && value>=0 && !expired) {
+        if (unit && ok && value>=0) {
             if (!strcmp(unit,"1 Hour") && value<INT64_MAX/730) { *out=value*730; found=1; }
             else if (!strcmp(unit,"1/Month")) { *out=value; found=1; }
         }
@@ -279,7 +287,7 @@ static int python_fallback(int argc,char **argv) {
 
 int main(int argc,char **argv) {
     const char *plan_path=NULL,*cache_path="pricing_cache.db",*currency="USD",*threshold="50";
-    int fallback=0,offline=0;
+    int fallback=0;
     for (int i=1;i<argc;i++) {
         if ((!strcmp(argv[i],"--plan") || !strcmp(argv[i],"--cache") ||
              !strcmp(argv[i],"--currency") || !strcmp(argv[i],"--max-increase")) && i+1<argc) {
@@ -288,9 +296,7 @@ int main(int argc,char **argv) {
             else if (!strcmp(flag,"--cache")) cache_path=argv[i];
             else if (!strcmp(flag,"--currency")) currency=argv[i];
             else threshold=argv[i];
-        } else if (!strcmp(argv[i],"--offline")) {
-            offline=1;
-        } else if (!strcmp(argv[i],"--strict")) {
+        } else if (!strcmp(argv[i],"--offline") || !strcmp(argv[i],"--strict")) {
         } else fallback=1;
     }
     if (fallback || !simple(currency)) return python_fallback(argc,argv);
@@ -364,9 +370,15 @@ int main(int argc,char **argv) {
     int64_t delta=new_total-old_total;
     char old[64],now[64],diff[64],budget[64];
     amount(old_total,old,sizeof(old));amount(new_total,now,sizeof(now));amount(delta,diff,sizeof(diff));amount(limit,budget,sizeof(budget));
-    printf("COSTGUARD: Azure Infrastructure Cost Impact Report\n");
-    printf("Changed supported resources only | %s/month | VM baseline: 730 hours\n",currency);
-    printf("%-39s  %-7s  %-12s  %-35s %10s %10s %10s\n","Resource Address","Action","Region","SKU / Meter","Old","New","Delta");
+    int colors=enable_colors();
+    const char *green=colors?"\x1b[32m":"",*red=colors?"\x1b[31m":"",*reset=colors?"\x1b[0m":"";
+    const char *status=delta>limit?"FAILED":"PASSED";
+    printf("+==============================================================================+\n");
+    printf("| COSTGUARD  /  AZURE COST IMPACT CHECK                                       |\n");
+    printf("+==============================================================================+\n");
+    printf("  Monthly estimate in %s  |  VM runtime: 730 hours  |  Changed supported resources\n\n",currency);
+    printf("COST BREAKDOWN\n");
+    printf("%-39s  %-7s  %-12s  %-35s %10s %10s %10s\n","Resource Address","Action","Region","SKU / Meter","Old/mo","New/mo","Delta/mo");
     for (int i=0;i<count;i++) {
         char a[64],b[64],c[64];
         amount(rows[i].old_cost,a,sizeof(a));amount(rows[i].new_cost,b,sizeof(b));amount(rows[i].new_cost-rows[i].old_cost,c,sizeof(c));
@@ -375,8 +387,12 @@ int main(int argc,char **argv) {
         printf("%-39s  %-7s  %-12s  %-35s %10s %10s %10s\n",rows[i].address,rows[i].action,
                rows[i].region,rows[i].sku,a,b,signed_delta);
     }
-    printf("Prior: %s | Proposed: %s | Net impact: %s/mo\n",old,now,diff);
-    printf("Cache: %d hits, 0 API requests | Skipped free/unchanged: %d\n",hits,skipped);
-    printf("Budget threshold: %s | Status: %s | Exit: %d\n",budget,delta>limit?"FAILED":"PASSED",delta>limit?1:0);
+    printf("\nBUDGET DECISION\n");
+    printf("  Status: %s%s%s  |  Exit code: %d\n",delta>limit?red:green,status,reset,delta>limit?1:0);
+    char signed_impact[68];
+    snprintf(signed_impact,sizeof(signed_impact),"%s%s",delta>0?"+":"",diff);
+    printf("  Monthly impact: %s %s  |  Budget limit: %s %s\n",signed_impact,currency,budget,currency);
+    printf("  Prior: %s %s  |  Proposed: %s %s\n",old,currency,now,currency);
+    printf("  Cache: %d hits, 0 API requests  |  Skipped free/unchanged: %d\n",hits,skipped);
     return delta>limit?1:0;
 }
