@@ -1,0 +1,235 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.16.4",
+  "origin": "Terraform test -json -verbose; official AzureRM provider mocked; non-pricing password redacted",
+  "resource_changes": [
+    {
+      "address": "azurerm_linux_virtual_machine.app[0]",
+      "mode": "managed",
+      "type": "azurerm_linux_virtual_machine",
+      "name": "app",
+      "index": 0,
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "additional_capabilities": [],
+          "admin_password": "<REDACTED>",
+          "admin_ssh_key": [],
+          "admin_username": "demo_user",
+          "availability_set_id": null,
+          "boot_diagnostics": [],
+          "bypass_platform_safety_checks_on_user_schedule_enabled": null,
+          "capacity_reservation_group_id": null,
+          "custom_data": null,
+          "dedicated_host_group_id": null,
+          "dedicated_host_id": null,
+          "disable_password_authentication": false,
+          "edge_zone": null,
+          "encryption_at_host_enabled": null,
+          "eviction_policy": null,
+          "extensions_time_budget": null,
+          "gallery_application": [],
+          "identity": [],
+          "license_type": null,
+          "location": "East US",
+          "max_bid_price": null,
+          "name": "costguard-demo-vm",
+          "network_interface_ids": [
+            "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/costguard-demo-rg/providers/Microsoft.Network/networkInterfaces/demo-nic"
+          ],
+          "os_disk": [
+            {
+              "caching": "ReadWrite",
+              "diff_disk_settings": [],
+              "disk_encryption_set_id": null,
+              "secure_vm_disk_encryption_set_id": null,
+              "security_encryption_type": null,
+              "storage_account_type": "Standard_LRS",
+              "write_accelerator_enabled": null
+            }
+          ],
+          "os_image_notification": [],
+          "plan": [],
+          "platform_fault_domain": null,
+          "priority": null,
+          "proximity_placement_group_id": null,
+          "reboot_setting": null,
+          "resource_group_name": "costguard-demo-rg",
+          "secret": [],
+          "secure_boot_enabled": null,
+          "size": "Standard_B1s",
+          "source_image_id": null,
+          "source_image_reference": [
+            {
+              "offer": "0001-com-ubuntu-server-jammy",
+              "publisher": "Canonical",
+              "sku": "22_04-lts",
+              "version": "latest"
+            }
+          ],
+          "tags": null,
+          "termination_notification": [],
+          "timeouts": null,
+          "user_data": null,
+          "virtual_machine_scale_set_id": null,
+          "vtpm_enabled": null,
+          "zone": null
+        },
+        "after_unknown": {
+          "additional_capabilities": [],
+          "admin_ssh_key": [],
+          "allow_extension_operations": true,
+          "boot_diagnostics": [],
+          "computer_name": true,
+          "disk_controller_type": true,
+          "gallery_application": [],
+          "id": true,
+          "identity": [],
+          "network_interface_ids": [
+            false
+          ],
+          "os_disk": [
+            {
+              "diff_disk_settings": [],
+              "disk_size_gb": true,
+              "id": true,
+              "name": true
+            }
+          ],
+          "os_image_notification": [],
+          "os_managed_disk_id": true,
+          "patch_assessment_mode": true,
+          "patch_mode": true,
+          "plan": [],
+          "private_ip_address": true,
+          "private_ip_addresses": true,
+          "provision_vm_agent": true,
+          "public_ip_address": true,
+          "public_ip_addresses": true,
+          "secret": [],
+          "source_image_reference": [
+            {}
+          ],
+          "termination_notification": [],
+          "virtual_machine_id": true,
+          "vm_agent_platform_updates_enabled": true
+        },
+        "before_sensitive": false,
+        "after_sensitive": {
+          "additional_capabilities": [],
+          "admin_password": true,
+          "admin_ssh_key": [],
+          "boot_diagnostics": [],
+          "custom_data": true,
+          "gallery_application": [],
+          "identity": [],
+          "network_interface_ids": [
+            false
+          ],
+          "os_disk": [
+            {
+              "diff_disk_settings": []
+            }
+          ],
+          "os_image_notification": [],
+          "plan": [],
+          "private_ip_addresses": [],
+          "public_ip_addresses": [],
+          "secret": [],
+          "source_image_reference": [
+            {}
+          ],
+          "termination_notification": []
+        }
+      }
+    },
+    {
+      "address": "azurerm_managed_disk.data",
+      "mode": "managed",
+      "type": "azurerm_managed_disk",
+      "name": "data",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "create_option": "Empty",
+          "disk_access_id": null,
+          "disk_encryption_set_id": null,
+          "disk_size_gb": 128,
+          "edge_zone": null,
+          "encryption_settings": [],
+          "gallery_image_reference_id": null,
+          "hyper_v_generation": null,
+          "image_reference_id": null,
+          "location": "East US",
+          "name": "costguard-demo-disk",
+          "network_access_policy": null,
+          "on_demand_bursting_enabled": null,
+          "optimized_frequent_attach_enabled": null,
+          "os_type": null,
+          "performance_plus_enabled": null,
+          "public_network_access_enabled": null,
+          "resource_group_name": "costguard-demo-rg",
+          "secure_vm_disk_encryption_set_id": null,
+          "security_type": null,
+          "source_resource_id": null,
+          "storage_account_id": null,
+          "storage_account_type": "Premium_LRS",
+          "tags": null,
+          "timeouts": null,
+          "trusted_launch_enabled": null,
+          "upload_size_bytes": null,
+          "zone": null
+        },
+        "after_unknown": {
+          "disk_iops_read_only": true,
+          "disk_iops_read_write": true,
+          "disk_mbps_read_only": true,
+          "disk_mbps_read_write": true,
+          "encryption_settings": [],
+          "id": true,
+          "logical_sector_size": true,
+          "max_shares": true,
+          "source_uri": true,
+          "tier": true
+        },
+        "before_sensitive": false,
+        "after_sensitive": {
+          "encryption_settings": []
+        }
+      }
+    },
+    {
+      "address": "azurerm_resource_group.demo",
+      "mode": "managed",
+      "type": "azurerm_resource_group",
+      "name": "demo",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "location": "East US",
+          "managed_by": null,
+          "name": "costguard-demo-rg",
+          "tags": null,
+          "timeouts": null
+        },
+        "after_unknown": {
+          "id": true
+        },
+        "before_sensitive": false,
+        "after_sensitive": {}
+      }
+    }
+  ]
+}

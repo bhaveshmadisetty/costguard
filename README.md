@@ -13,7 +13,7 @@ Terraform plan JSON -> resource before/after -> SQLite / live Azure prices
 
 ## Quick start on this Windows workspace
 
-Python 3.11+ is the only runtime dependency. No pip packages, Azure subscription, API key, or cloud deployment is required to run the included fixtures.
+Python 3.11+ is the only runtime dependency. The bundled Windows `costguard.exe` speeds up supported warm-cache CLI runs; cache misses and advanced options use the Python engine. No pip packages, Azure subscription, API key, or cloud deployment is required to run the included fixtures.
 
 ```powershell
 .\costguard.cmd --plan test-plans/plan-a-small-add.json --strict
@@ -46,6 +46,18 @@ terraform '-chdir=examples/terraform-smoke' plan '-out=smoke.tfplan'
 terraform '-chdir=examples/terraform-smoke' show -json smoke.tfplan | costguard --strict
 ```
 
+`examples/azure-mock` contains a real Terraform AzureRM configuration and Terraform test runs that generate create, VM upgrade, and VM delete plans. The provider is mocked, so these plans are produced by Terraform without provisioning Azure resources or requiring credentials. Reproduce the committed, redacted `test-plans/terraform-azure-*.json` fixtures with:
+
+```powershell
+terraform '-chdir=examples/azure-mock' init -backend=false
+py scripts/capture_terraform_mock.py
+.\costguard.cmd --plan test-plans/terraform-azure-create.json --offline --strict
+.\costguard.cmd --plan test-plans/terraform-azure-upgrade.json --offline --strict
+.\costguard.cmd --plan test-plans/terraform-azure-delete.json --offline --strict
+```
+
+Warm those prices once with a live run before using `--offline`. The AzureRM test provider is mocked; this verifies Terraform's Azure change-plan shape, while applying to a live Azure subscription remains outside this demo.
+
 ## Options and policy
 
 | Option | Behavior |
@@ -55,7 +67,7 @@ terraform '-chdir=examples/terraform-smoke' show -json smoke.tfplan | costguard 
 | `--currency USD/EUR/GBP/INR` | Request currency directly from Azure; isolate cache entries |
 | `--cache FILE` | SQLite location; default `pricing_cache.db` in current directory |
 | `--clear-cache` | Remove cached rates before running; also works alone |
-| `--offline` | Use cached prices only |
+| `--offline` | Use cached prices only; uncached SKUs display `$0.00` with a warning and an incomplete verdict |
 | `--strict` | Exit 2 when any changed resource cannot be priced completely |
 | `--timeout 10` | HTTP timeout in seconds |
 | `--retries 2` | Retry transient API timeouts and 429/5xx responses; default 2 |
@@ -63,7 +75,7 @@ terraform '-chdir=examples/terraform-smoke' show -json smoke.tfplan | costguard 
 | `--json` | Machine-readable results, exact decimal strings, meter records and query URLs |
 | `--group-by Team` | Additional delta totals grouped by a tag |
 
-Exit 0 means the known delta is within budget; exit 1 means it exceeds the budget; exit 2 means invalid input/operational error, or an incomplete estimate under `--strict`. Equality with the threshold passes. A known breach returns 1 even if other resources are unpriced. **Use `--strict` in deployment gates.** Default mode continues on unknown resources as requested by the handout but prints `INCOMPLETE`, never a misleading complete pass.
+Exit 0 means the known delta is within budget; exit 1 means it exceeds the budget; exit 2 means invalid input/operational error, or an incomplete estimate under `--strict`. Equality with the threshold passes. A known breach returns 1 even if other resources are unpriced. **Use `--strict` in deployment gates.** Offline uncached SKUs and network failures show the handout's `$0.00` fallback but retain an `INCOMPLETE` verdict; zero is a display default, not a known free price.
 
 Calculations use decimal arithmetic and unrounded values for the threshold. Display values are rounded to two decimal places only at output. Totals describe changed, supported resources, not the full Azure bill or unchanged estate.
 
@@ -84,13 +96,14 @@ VM estimates cover compute meters only: embedded OS disks, network traffic, soft
 py -m unittest discover -s tests -v
 py scripts/verify_live.py
 py scripts/benchmark.py
+py scripts/benchmark_native.py
 powershell -ExecutionPolicy Bypass -File scripts/demo.ps1
 sqlite3 pricing_cache.db "SELECT region,currency,hourly_rate,cached_at FROM pricing_cache;"
 ```
 
-`verify_live.py` requires network access, clears its own verification cache, records real pricing evidence, and checks zero-network offline repeats. It leaves the normal CLI cache intact. `benchmark.py` warms a missing Plan A cache from the live API before measuring; if Azure remains unavailable it exits with a clear message. `scripts/prepare_plans.py` regenerates the **synthetic Terraform-format fixtures**; they are not presented as captured Azure deployment plans. Unit tests use explicitly fake rates to test logic, while production pricing and `evidence/live-results.json` use the live API.
+`verify_live.py` requires network access, clears its own verification cache, records real pricing evidence, and checks zero-network offline repeats. It leaves the normal CLI cache intact. `benchmark.py` measures the Python engine. `benchmark_native.py` measures complete Windows native process launches with a warmed cache and records each sample in `evidence/native-benchmark.json`. The executable can be rebuilt with `py scripts/build_fast.py` if GCC is installed; that script verifies the downloaded SQLite source checksum. `scripts/prepare_plans.py` regenerates the older **synthetic Terraform-format fixtures**. Unit tests use fake rates to test logic, while production pricing and `evidence/live-results.json` use the live API.
 
-See [REPORT.md](REPORT.md) for measured results and [COMPETITION.md](COMPETITION.md) for the preparation and judging walkthrough. Full Windows Python launches currently exceed the handout's 50 ms target; cached processing itself is below it. Both measurements are recorded separately.
+See [REPORT.md](REPORT.md) for measured results and [COMPETITION.md](COMPETITION.md) for the preparation and judging walkthrough. The second complete native Windows run meets the 50 ms target on this machine; the Python-only CLI remains slower. Both measurements are recorded separately.
 
 ## References
 

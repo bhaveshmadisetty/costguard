@@ -119,11 +119,15 @@ class CostGuardTests(unittest.TestCase):
         def fail(*_):raise OSError('network down')
         p=self.pricing(transport=fail)
         rows,warnings,_=self.analyze(p,resource(['create'],None,vm()))
-        self.assertTrue(warnings); self.assertIsNone(rows[0]['new'])
+        self.assertTrue(warnings); self.assertEqual(rows[0]['new'],Decimal(0))
+        self.assertIn('defaulting SKU to $0.00',warnings[0])
         self.assertEqual(p.db.execute('SELECT count(*) FROM pricing_cache').fetchone()[0],0)
         q=self.pricing(offline=True)
         with self.assertRaises(c.Unpriced):q.rate(c.spec('azurerm_linux_virtual_machine',vm()))
         self.assertEqual(q.calls,0)
+        rows,warnings,_=self.analyze(q,resource(['create'],None,vm()))
+        self.assertEqual(rows[0]['delta'],Decimal(0))
+        self.assertTrue(warnings)
     def test_transient_timeout_retries_then_caches(self):
         attempts=[]
         def flaky(url,timeout):
@@ -152,6 +156,14 @@ class CostGuardTests(unittest.TestCase):
         self.assertTrue(warnings)
         noise=dict(resource(['create'],None,{}),type='azurerm_subnet')
         self.assertEqual(self.analyze(p,noise),([],[],1))
+    def test_computed_disk_tier_with_known_size(self):
+        entry=meter(serviceName='Storage',productName='Premium SSD Managed Disks',meterName='P10 LRS Disk',unitOfMeasure='1/Month',price='19.71')
+        p=self.pricing([entry])
+        disk=resource(['create'],None,dict(location='eastus',storage_account_type='Premium_LRS',disk_size_gb=128),after_unknown={'tier':True})
+        disk['type']='azurerm_managed_disk'
+        rows,warnings,_=self.analyze(p,disk)
+        self.assertEqual(rows[0]['delta'],Decimal('19.71'))
+        self.assertFalse(warnings)
     def test_policy_exact_boundary_and_strict(self):
         p=self.pricing(); rows,warnings,skipped=self.analyze(p,resource(['create'],None,vm()))
         with contextlib.redirect_stdout(io.StringIO()),contextlib.redirect_stderr(io.StringIO()):

@@ -47,7 +47,7 @@ def spec(kind, state):
                 raise Unpriced('Legacy VM OS cannot be determined')
         else:
             windows = kind == 'azurerm_windows_virtual_machine'
-        priority = str(state.get('priority', 'Regular')).lower()
+        priority = str(state.get('priority') or 'Regular').lower()
         if priority not in ('regular', 'spot'):
             raise Unpriced('Unsupported VM priority')
         return dict(service='Virtual Machines', sku=sku, region=region,
@@ -144,8 +144,9 @@ class Pricing:
             self.db.commit()
             return result
         except (OSError, ValueError, KeyError, TypeError, InvalidOperation, Unpriced) as error:
-            self.failed[failure_key] = str(error)
-            raise Unpriced(str(error)) from error
+            message = ('Network unavailable: ' if isinstance(error, OSError) else '') + str(error)
+            self.failed[failure_key] = message
+            raise Unpriced(message) from error
 
     def request(self, url):
         from urllib.error import HTTPError
@@ -217,7 +218,8 @@ def analyze(plan, pricing, group_by=None):
                 continue
             try:
                 unknown = change.get('after_unknown') if side == 'after' else None
-                if unknown is True or (isinstance(unknown, dict) and any(unknown.get(k) for k in ('size','vm_size','location','disk_size_gb','storage_account_type','priority','tier'))):
+                price_keys = ('size','vm_size','location','priority') if kind in VM else ('location','disk_size_gb','storage_account_type')
+                if unknown is True or (isinstance(unknown, dict) and any(unknown.get(k) for k in price_keys)):
                     raise Unpriced('Price-relevant values are unknown until apply')
                 item = spec(kind, change.get(side))
                 labels.append(item['sku']); regions.append(item['region'])
@@ -227,16 +229,20 @@ def analyze(plan, pricing, group_by=None):
                 problem = str(error)
                 costs.append(None); proofs.append(None)
         if problem:
-            warnings.append(f'{address}: {problem}. Skipping cost; estimate incomplete.')
-            # Never count just one side of a partially priced update as a saving.
-            costs = [None, None]
+            if problem.startswith(('Offline: no cached price', 'Network unavailable:')):
+                warnings.append(f'{address}: Network unavailable; defaulting SKU to $0.00. Estimate incomplete.')
+                # Do not turn a partially priced update into a false saving.
+                costs = [Decimal(0), Decimal(0)]
+            else:
+                warnings.append(f'{address}: {problem}. Skipping cost; estimate incomplete.')
+                costs = [None, None]
         state = change.get('after') or change.get('before') or {}
         tags = state.get('tags') or {} if isinstance(state,dict) else {}
         if not isinstance(tags,dict):
             tags = {}
         rows.append(dict(address=address, action='REPLACE' if len(actions)==2 else actions[0].upper(),
                          region=' -> '.join(dict.fromkeys(regions)), sku=' -> '.join(dict.fromkeys(labels)) or '?',
-                         old=costs[0], new=costs[1], delta=None if problem else costs[1]-costs[0],
+                         old=costs[0], new=costs[1], delta=None if None in costs else costs[1]-costs[0],
                          group=str(tags.get(group_by,'(untagged)')) if group_by else '', proofs=proofs))
     return rows, warnings, skipped
 

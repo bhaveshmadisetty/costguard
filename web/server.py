@@ -15,6 +15,7 @@ import costguard
 
 WEB = Path(__file__).resolve().parent
 SAMPLES = {
+    'terraform-azure-create', 'terraform-azure-upgrade', 'terraform-azure-delete',
     'plan-a-small-add', 'plan-b-upgrade-delete', '01-create', '02-delete',
     '03-upgrade', '04-hostile-noise', '05-tags-only', '06-replace', '07-downgrade',
 }

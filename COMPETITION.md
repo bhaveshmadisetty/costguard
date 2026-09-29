@@ -34,9 +34,9 @@ Run the tests and live demo on the exact laptop and network you will use. Activa
 2. Select Plan A, clear the price cache, set the limit to 50 and run it. Explain why VM price is multiplied by 730 and disk price is already monthly.
 3. Turn on "Use cached prices only" and repeat. Show two cache hits and zero API calls.
 4. Lower the limit to 20 and run it. Show the red budget verdict. The CLI runs the same engine and returns exit code 1 for this case.
-5. Select upgrade/deletion, downsize, tags-only and hostile-noise examples to show each lifecycle behavior.
+5. Select the Terraform-generated Azure create, upgrade and deletion samples. Explain that Terraform's planner produced them with a mocked AzureRM provider, so no subscription was needed. Then show downsize, tags-only and hostile-noise examples.
 6. Expand "Pricing evidence" to show a specific meter ID, Azure query URL, unit and rate.
-7. Open REPORT.md and explain scope and timing limitations without overstating the tool.
+7. Run `py scripts/benchmark_native.py` and show the complete warm-cache CLI launch time in `evidence/native-benchmark.json`. Open REPORT.md and explain the supported-resource scope.
 
 Use `scripts/demo.ps1` for the repeatable walkthrough. Avoid spending the demo on installation or on features that do not earn rubric marks.
 
@@ -48,7 +48,8 @@ Use `scripts/demo.ps1` for the repeatable walkthrough. Avoid spending the demo o
 - **What if new size is unknown?** Mark the estimate incomplete, never turn a missing new price into false savings.
 - **Why SQLite?** Persistent local cache between CLI launches; inspectable, no external service.
 - **Does it predict the full invoice?** No. It estimates retail recurring cost for supported changed resources under stated usage assumptions.
-- **Is it under 50 ms?** The measured core processing is; full Windows process startup is not. Show both measurements.
+- **Is it under 50 ms?** The second complete native Windows launch measured 14.711 ms here. Re-run the benchmark on the judging machine; the Python fallback is slower.
+- **Are the Azure plans real?** Terraform generated create, update and delete plans for actual AzureRM resource schemas. The provider was mocked, so no live Azure infrastructure was provisioned.
 
 ## Submission checklist
 

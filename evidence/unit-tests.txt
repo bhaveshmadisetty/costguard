@@ -1,4 +1,5 @@
 test_cache_persists_without_network (test_costguard.CostGuardTests.test_cache_persists_without_network) ... ok
+test_computed_disk_tier_with_known_size (test_costguard.CostGuardTests.test_computed_disk_tier_with_known_size) ... ok
 test_currency_isolation (test_costguard.CostGuardTests.test_currency_isolation) ... ok
 test_disk_monthly_unit_and_product (test_costguard.CostGuardTests.test_disk_monthly_unit_and_product) ... ok
 test_filters_wrong_meters (test_costguard.CostGuardTests.test_filters_wrong_meters) ... ok
@@ -18,11 +19,13 @@ test_transient_timeout_retries_then_caches (test_costguard.CostGuardTests.test_t
 test_unknown_after_and_noise (test_costguard.CostGuardTests.test_unknown_after_and_noise) ... ok
 test_upgrade_and_downsize (test_costguard.CostGuardTests.test_upgrade_and_downsize) ... ok
 test_windows_and_spot_cache_isolation (test_costguard.CostGuardTests.test_windows_and_spot_cache_isolation) ... ok
+test_create_upgrade_delete_from_terraform (test_terraform_plans.TerraformPlansTests.test_create_upgrade_delete_from_terraform) ... ok
 test_local_http_page_and_analyze (test_web.WebTests.test_local_http_page_and_analyze) ... ok
 test_sample_uses_live_price_and_then_cache (test_web.WebTests.test_sample_uses_live_price_and_then_cache) ... ok
 test_upload_and_invalid_budget (test_web.WebTests.test_upload_and_invalid_budget) ... ok
+test_offline_uncached_fallback_preserves_strict_exit_code (test_windows_launcher.WindowsLauncherTests.test_offline_uncached_fallback_preserves_strict_exit_code) ... ok
 
 ----------------------------------------------------------------------
-Ran 23 tests in 1.762s
+Ran 26 tests in 2.187s
 
 OK
