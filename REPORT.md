@@ -57,8 +57,8 @@ An actual Terraform 1.16.4 output-only configuration was planned to a binary, co
 
 | Measurement | Runs | Median | Maximum |
 |---|---:|---:|---:|
-| Fresh Python process, full JSON report, offline cache; excludes `py` launcher | 10 | 221.418 ms | 340.260 ms |
-| In-process `main`, argument parsing, file read, SQLite, math, terminal rendering | 20 | 2.396 ms | 27.162 ms |
+| Fresh Python process, full JSON report, offline cache; excludes `py` launcher | 10 | 248.474 ms | 483.871 ms |
+| In-process `main`, argument parsing, file read, SQLite, math, terminal rendering | 20 | 1.799 ms | 2.582 ms |
 
 The strict full-CLI under-50-ms requirement is **not met on this Windows environment**. The under-50-ms processing result is not substituted for the full-process measurement. Zero HTTP calls on the warm path is met. Raw timing samples are in the two evidence JSON files.
 
@@ -72,6 +72,7 @@ The strict full-CLI under-50-ms requirement is **not met on this Windows environ
 6. Disk inclusion is ambiguous in the handout; this implementation covers Plan A's P10 Premium disk, using Microsoft's actual monthly unit.
 7. Tag grouping uses proposed tags (prior tags for deletion); it is not a full reallocation ledger for moves between teams.
 8. Windows and explicit Spot selection have automated fixture tests; the recorded live integration evidence covers regular Linux compute and Premium disk pricing.
+9. Transient Azure timeouts and rate limits are retried twice by default. Continued failure produces an incomplete estimate; the verification script uses a separate cache so a failed run does not erase the normal cache.
 
 ## 6. How to Run It
 

@@ -2,6 +2,8 @@
 
 Estimate the monthly cost change in an Azure Terraform plan before deployment. CostGuard reads plan JSON, selects the matching Azure Retail Prices meter, caches it in SQLite, and blocks changes that exceed a budget.
 
+**You do not need an Azure VM or subscription.** The included test plans represent proposed changes; pricing comes from Microsoft's public API. Start with `costguard.cmd --plan test-plans\plan-a-small-add.json --max-increase 20` in Command Prompt to see a budget failure.
+
 ```text
 Terraform plan JSON -> resource before/after -> SQLite / live Azure prices
                     -> monthly delta -> terminal report -> exit 0 / 1 / 2
@@ -54,6 +56,7 @@ terraform '-chdir=examples/terraform-smoke' show -json smoke.tfplan | costguard 
 | `--offline` | Use cached prices only |
 | `--strict` | Exit 2 when any changed resource cannot be priced completely |
 | `--timeout 10` | HTTP timeout in seconds |
+| `--retries 2` | Retry transient API timeouts and 429/5xx responses; default 2 |
 | `--markdown` | Render a Markdown table |
 | `--json` | Machine-readable results, exact decimal strings, meter records and query URLs |
 | `--group-by Team` | Additional delta totals grouped by a tag |
@@ -83,7 +86,7 @@ powershell -ExecutionPolicy Bypass -File scripts/demo.ps1
 sqlite3 pricing_cache.db "SELECT region,currency,hourly_rate,cached_at FROM pricing_cache;"
 ```
 
-`verify_live.py` requires network access, clears the default cache, records real pricing evidence, and checks zero-network offline repeats. `benchmark.py` requires the warmed Plan A cache. `scripts/prepare_plans.py` regenerates the **synthetic Terraform-format fixtures**; they are not presented as captured Azure deployment plans. Unit tests use explicitly fake rates to test logic, while production pricing and `evidence/live-results.json` use the live API.
+`verify_live.py` requires network access, clears its own verification cache, records real pricing evidence, and checks zero-network offline repeats. It leaves the normal CLI cache intact. `benchmark.py` warms a missing Plan A cache from the live API before measuring; if Azure remains unavailable it exits with a clear message. `scripts/prepare_plans.py` regenerates the **synthetic Terraform-format fixtures**; they are not presented as captured Azure deployment plans. Unit tests use explicitly fake rates to test logic, while production pricing and `evidence/live-results.json` use the live API.
 
 See [REPORT.md](REPORT.md) for measured results and [COMPETITION.md](COMPETITION.md) for the preparation and judging walkthrough. Full Windows Python launches currently exceed the handout's 50 ms target; cached processing itself is below it. Both measurements are recorded separately.
 

@@ -10,24 +10,31 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'evidence'
 OUT.mkdir(exist_ok=True)
+CACHE=OUT/'verification-cache.db'
 
 
 def run(name, *flags, stdin=False):
     plan=ROOT/'test-plans'/f'{name}.json'
-    args=[sys.executable,str(ROOT/'costguard.py'),'--json','--strict',*flags]
+    args=[sys.executable,str(ROOT/'costguard.py'),'--json','--strict','--cache',str(CACHE),
+          '--timeout','20',*flags]
     if not stdin:args+=['--plan',str(plan)]
     started=time.perf_counter()
     process=subprocess.run(args,cwd=ROOT,input=plan.read_text() if stdin else None,text=True,capture_output=True)
     elapsed=(time.perf_counter()-started)*1000
+    if not process.stdout.strip():
+        raise RuntimeError(process.stderr.strip() or 'CostGuard produced no output')
     result=json.loads(process.stdout)
-    assert process.returncode==result['exit_code'],process.stderr
+    if process.returncode != result['exit_code']:
+        raise RuntimeError(process.stderr.strip() or 'Exit code mismatch')
     return dict(plan=name,elapsed_ms=round(elapsed,3),**result)
 
 
 results=[]
 for i,name in enumerate(['plan-a-small-add','03-upgrade','02-delete','04-hostile-noise','05-tags-only','06-replace','07-downgrade','plan-b-upgrade-delete']):
     result=run(name,*(['--clear-cache'] if i==0 else []))
-    assert result['complete'],result['warnings']
+    if not result['complete']:
+        raise SystemExit('Live pricing could not finish: ' + '; '.join(result['warnings']) +
+                         '\nThe public Azure API may be slow. Retry this script later; the normal CostGuard cache was not cleared.')
     results.append(result)
 results.append(run('plan-a-small-add','--offline','--max-increase','20'))
 assert results[-1]['exit_code']==1

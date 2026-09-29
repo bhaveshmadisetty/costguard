@@ -8,16 +8,18 @@ test_malformed_state_warns (test_costguard.CostGuardTests.test_malformed_state_w
 test_malformed_structure (test_costguard.CostGuardTests.test_malformed_structure) ... ok
 test_network_offline_and_unknown (test_costguard.CostGuardTests.test_network_offline_and_unknown) ... ok
 test_no_partial_update_savings (test_costguard.CostGuardTests.test_no_partial_update_savings) ... ok
+test_no_retry_for_missing_meter (test_costguard.CostGuardTests.test_no_retry_for_missing_meter) ... ok
 test_pagination_and_ambiguity (test_costguard.CostGuardTests.test_pagination_and_ambiguity) ... ok
 test_policy_exact_boundary_and_strict (test_costguard.CostGuardTests.test_policy_exact_boundary_and_strict) ... ok
 test_regional_standard_meter_need_not_be_primary (test_costguard.CostGuardTests.test_regional_standard_meter_need_not_be_primary) ... ok
 test_stdin_and_file_equivalence (test_costguard.CostGuardTests.test_stdin_and_file_equivalence) ... ok
 test_terraform_output_only_plan (test_costguard.CostGuardTests.test_terraform_output_only_plan) ... ok
+test_transient_timeout_retries_then_caches (test_costguard.CostGuardTests.test_transient_timeout_retries_then_caches) ... ok
 test_unknown_after_and_noise (test_costguard.CostGuardTests.test_unknown_after_and_noise) ... ok
 test_upgrade_and_downsize (test_costguard.CostGuardTests.test_upgrade_and_downsize) ... ok
 test_windows_and_spot_cache_isolation (test_costguard.CostGuardTests.test_windows_and_spot_cache_isolation) ... ok
 
 ----------------------------------------------------------------------
-Ran 18 tests in 0.262s
+Ran 20 tests in 1.693s
 
 OK

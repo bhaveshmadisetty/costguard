@@ -81,14 +81,14 @@ def fetch(url, timeout):
 
 
 class Pricing:
-    def __init__(self, path, currency='USD', timeout=10, offline=False, transport=fetch):
+    def __init__(self, path, currency='USD', timeout=10, offline=False, transport=fetch, retries=2):
         self.db = sqlite3.connect(path)
         self.db.execute('''CREATE TABLE IF NOT EXISTS pricing_cache (
             sku TEXT NOT NULL, region TEXT NOT NULL, currency TEXT NOT NULL,
             hourly_rate REAL NOT NULL, cached_at INTEGER NOT NULL,
             raw_json TEXT NOT NULL, source_url TEXT NOT NULL,
             PRIMARY KEY (sku,region,currency))''')
-        self.currency, self.timeout, self.offline, self.transport = currency, timeout, offline, transport
+        self.currency, self.timeout, self.offline, self.transport, self.retries = currency, timeout, offline, transport, retries
         self.hits = self.calls = 0
         self.failed = {}
 
@@ -125,8 +125,7 @@ class Pricing:
                 if parsed.scheme != 'https' or parsed.hostname != 'prices.azure.com' or url in seen or len(seen) >= 100:
                     raise Unpriced('Invalid or excessive API pagination')
                 seen.add(url)
-                self.calls += 1
-                payload = self.transport(url, self.timeout)
+                payload = self.request(url)
                 for entry in payload['Items']:
                     if self.matches(entry, item):
                         candidates.append(entry)
@@ -147,6 +146,21 @@ class Pricing:
         except (OSError, ValueError, KeyError, TypeError, InvalidOperation, Unpriced) as error:
             self.failed[failure_key] = str(error)
             raise Unpriced(str(error)) from error
+
+    def request(self, url):
+        from urllib.error import HTTPError
+        from http.client import HTTPException
+        for attempt in range(self.retries + 1):
+            try:
+                self.calls += 1
+                return self.transport(url, self.timeout)
+            except HTTPError as error:
+                if error.code not in (408, 429, 500, 502, 503, 504) or attempt == self.retries:
+                    raise
+            except (OSError, TimeoutError, HTTPException):
+                if attempt == self.retries:
+                    raise
+            time.sleep(min(0.5 * (2 ** attempt), 2))
 
     def matches(self, entry, item):
         if entry.get('type') != 'Consumption' or entry.get('currencyCode') != self.currency or entry.get('armRegionName') != item['region']:
@@ -283,6 +297,7 @@ def main(argv=None):
     parser.add_argument('--offline', action='store_true')
     parser.add_argument('--strict', action='store_true', help='Exit 2 on incomplete pricing')
     parser.add_argument('--timeout', type=float, default=10)
+    parser.add_argument('--retries', type=int, default=2, help='Retries for transient API failures; default 2')
     output = parser.add_mutually_exclusive_group()
     output.add_argument('--markdown', action='store_true')
     output.add_argument('--json', action='store_true')
@@ -293,7 +308,9 @@ def main(argv=None):
         limit = decimal(args.max_increase)
         if not 0 < args.timeout <= 120:
             raise ValueError('--timeout must be between 0 and 120 seconds')
-        pricing = Pricing(args.cache, args.currency, args.timeout, args.offline)
+        if not 0 <= args.retries <= 5:
+            raise ValueError('--retries must be between 0 and 5')
+        pricing = Pricing(args.cache, args.currency, args.timeout, args.offline, retries=args.retries)
         if args.clear_cache:
             pricing.clear()
             if args.plan is None and sys.stdin.isatty():

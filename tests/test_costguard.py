@@ -124,6 +124,28 @@ class CostGuardTests(unittest.TestCase):
         q=self.pricing(offline=True)
         with self.assertRaises(c.Unpriced):q.rate(c.spec('azurerm_linux_virtual_machine',vm()))
         self.assertEqual(q.calls,0)
+    def test_transient_timeout_retries_then_caches(self):
+        attempts=[]
+        def flaky(url,timeout):
+            attempts.append(url)
+            if len(attempts)<3:
+                raise TimeoutError('timed out')
+            return {'Items':[meter()], 'NextPageLink':None}
+        p=self.pricing(transport=flaky,retries=2)
+        with patch.object(c.time,'sleep'):
+            price=p.rate(c.spec('azurerm_linux_virtual_machine',vm()))
+        self.assertEqual(price['monthly'],Decimal('7.30'))
+        self.assertEqual((len(attempts),p.calls),(3,3))
+        self.assertEqual(p.rate(c.spec('azurerm_linux_virtual_machine',vm()))['source'],'cache')
+    def test_no_retry_for_missing_meter(self):
+        attempts=[]
+        def empty(url,timeout):
+            attempts.append(url)
+            return {'Items':[], 'NextPageLink':None}
+        p=self.pricing(transport=empty)
+        with self.assertRaises(c.Unpriced):
+            p.rate(c.spec('azurerm_linux_virtual_machine',vm()))
+        self.assertEqual(len(attempts),1)
     def test_unknown_after_and_noise(self):
         p=self.pricing(transport=lambda *_:self.fail('Unexpected API call'))
         rows,warnings,_=self.analyze(p,resource(['create'],None,vm(),after_unknown={'size':True}))
