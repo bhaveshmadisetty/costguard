@@ -92,7 +92,7 @@ Calculations use decimal arithmetic and unrounded values for the threshold. Disp
 - Consumption-only filtering excludes reservation, Dev/Test, Low Priority, wrong OS, wrong currency and wrong region meters. Spot is excluded unless explicitly requested by the plan. Pagination is followed and ambiguous results are warned rather than guessed.
 - A partially priced update is excluded as a whole so a missing new price cannot become a false saving.
 
-VM estimates cover compute meters only: embedded OS disks, network traffic, software licensing beyond the selected VM meter, taxes, discounts and other usage-based charges are outside scope. By default, cached rates are returned immediately until explicitly cleared or refreshed with `--refresh`. Opt-in automatic refresh is available with `--auto-refresh-hours`; it remains off by default for the hackathon's strict cache-first behavior. Tag groups use the proposed tag, or the prior tag for deletion.
+VM estimates cover compute meters only: embedded OS disks, network traffic, software licensing beyond the selected VM meter, taxes, discounts and other usage-based charges are outside scope. By default, cached rates are returned immediately until explicitly cleared or refreshed with `--refresh`. Opt-in automatic refresh is available with `--auto-refresh-hours`; it remains off by default to preserve strict cache-first behavior. Tag groups use the proposed tag, or the prior tag for deletion.
 
 ## Verification and demo
 

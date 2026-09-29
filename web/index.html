@@ -30,7 +30,7 @@
         <form id="run-form">
           <fieldset class="source-picker">
             <legend>Plan source</legend>
-            <label class="radio-card"><input type="radio" name="source" value="sample" checked><span><strong>Use a sample</strong><small>Explore the hackathon cases</small></span></label>
+            <label class="radio-card"><input type="radio" name="source" value="sample" checked><span><strong>Use a sample plan</strong><small>Bundled Terraform plans covering create, upgrade, delete and replace</small></span></label>
             <label class="radio-card"><input type="radio" name="source" value="upload"><span><strong>Upload plan JSON</strong><small>From terraform show -json</small></span></label>
           </fieldset>
 
@@ -50,7 +50,7 @@
               <option value="06-replace">Replace a VM</option>
               <option value="07-downgrade">Downsize a VM</option>
             </select>
-            <p class="help">The sample describes a proposed change. It does not deploy anything.</p>
+            <p class="help">A sample is a Terraform plan describing a proposed change. Prices always come from the live Azure Retail Prices API or the local cache, never from the sample.</p>
           </div>
 
           <div id="upload-fields" class="field-group" hidden>
