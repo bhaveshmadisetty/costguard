@@ -19,7 +19,7 @@
       <p class="eyebrow">Azure infrastructure cost impact predictor</p>
       <h1>Know the cost before you deploy.</h1>
       <p>Check a sample Terraform plan or upload your own plan JSON. CostGuard looks up live Azure retail prices, calculates the monthly change, and checks it against your budget.</p>
-      <div class="intro-facts"><span>No Azure account needed</span><span>No VM created</span><span>Prices cached locally</span></div>
+      <div class="intro-facts"><span>Live prices: prices.azure.com</span><span>No VM created</span><span>Prices cached locally</span></div>
     </section>
 
     <div class="workspace">
@@ -65,6 +65,7 @@
           </div>
 
           <label class="check-row"><input id="offline" type="checkbox"><span>Use cached prices only <small>Useful for an offline demo after one live run</small></span></label>
+          <label class="check-row"><input id="refresh" type="checkbox"><span>Fetch fresh prices from Azure <small>Queries https://prices.azure.com/api/retail/prices and updates the local cache</small></span></label>
           <button class="primary-button" id="run-button" type="submit">Run cost check <span aria-hidden="true">→</span></button>
           <p id="form-message" class="form-message" role="alert" hidden></p>
         </form>

@@ -18,7 +18,7 @@ Known free types, data sources and no-op resources are skipped. Unsupported pote
 |---|---|
 | Live API versus static rates | Public Microsoft endpoint; runtime never uses hardcoded prices. Evidence retains selected meters and exact queries. |
 | Cache | SQLite `pricing_cache`, keyed by serialized pricing identity, region, currency; records also contain normalized hourly rate, timestamp, original meter JSON and URL. Identity includes service, OS and priority to prevent collisions. |
-| Cache-first semantics | Read SQLite before every lookup, fetch only on misses, immediately commit a successful result. No failures are cached as zero. Clear explicitly with `--clear-cache`. |
+| Cache-first semantics | Read SQLite before every lookup by default, fetch only on misses, immediately commit a successful result. `--refresh` bypasses existing entries and replaces them with current Azure responses. No failures are cached as zero. |
 | Meter filters | Exact service, region, SKU/product, currency and Consumption type; exclude Low Priority and unintended Spot/Windows; validate billing units and zero tier minimum; follow pagination. |
 | Regional meters | Do not require `isPrimaryMeterRegion=true`: live eastus D2s_v3 regular Consumption records returned false. All required identity filters still apply. |
 | Ambiguity | Multiple matching meter IDs produce an incomplete result. For one meter ID, select the latest effective nonfuture record. |

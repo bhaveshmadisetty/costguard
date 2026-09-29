@@ -2,6 +2,13 @@ const $ = id => document.getElementById(id);
 const form = $('run-form');
 const button = $('run-button');
 
+$('offline').addEventListener('change', () => {
+  if ($('offline').checked) $('refresh').checked = false;
+});
+$('refresh').addEventListener('change', () => {
+  if ($('refresh').checked) $('offline').checked = false;
+});
+
 function selectedSource() {
   return document.querySelector('input[name="source"]:checked').value;
 }
@@ -135,7 +142,8 @@ form.addEventListener('submit', async event => {
     source: selectedSource(),
     max_increase: limit,
     currency: $('currency').value,
-    offline: $('offline').checked
+    offline: $('offline').checked,
+    refresh: $('refresh').checked
   };
   try {
     if (request.source === 'sample') {

@@ -81,7 +81,7 @@ def fetch(url, timeout):
 
 
 class Pricing:
-    def __init__(self, path, currency='USD', timeout=10, offline=False, transport=fetch, retries=2):
+    def __init__(self, path, currency='USD', timeout=10, offline=False, transport=fetch, retries=2, refresh=False):
         self.db = sqlite3.connect(path)
         self.db.execute('''CREATE TABLE IF NOT EXISTS pricing_cache (
             sku TEXT NOT NULL, region TEXT NOT NULL, currency TEXT NOT NULL,
@@ -89,6 +89,7 @@ class Pricing:
             raw_json TEXT NOT NULL, source_url TEXT NOT NULL,
             PRIMARY KEY (sku,region,currency))''')
         self.currency, self.timeout, self.offline, self.transport, self.retries = currency, timeout, offline, transport, retries
+        self.refresh = refresh
         self.hits = self.calls = 0
         self.failed = {}
 
@@ -100,7 +101,7 @@ class Pricing:
         key = json.dumps({k:v for k,v in item.items() if k != 'region'}, sort_keys=True)
         cached = self.db.execute('SELECT raw_json,source_url,cached_at FROM pricing_cache WHERE sku=? AND region=? AND currency=?',
                                  (key,item['region'],self.currency)).fetchone()
-        if cached:
+        if cached and not self.refresh:
             self.hits += 1
             return self.result(json.loads(cached[0]), cached[1], cached[2], 'cache')
         failure_key = (key,item['region'],self.currency)
@@ -307,6 +308,7 @@ def main(argv=None):
     parser.add_argument('--cache', type=Path, default=Path('pricing_cache.db'))
     parser.add_argument('--clear-cache', action='store_true')
     parser.add_argument('--offline', action='store_true')
+    parser.add_argument('--refresh', action='store_true', help='Fetch current Azure prices instead of using saved prices')
     parser.add_argument('--strict', action='store_true', help='Exit 2 on incomplete pricing')
     parser.add_argument('--timeout', type=float, default=10)
     parser.add_argument('--retries', type=int, default=2, help='Retries for transient API failures; default 2')
@@ -322,7 +324,9 @@ def main(argv=None):
             raise ValueError('--timeout must be between 0 and 120 seconds')
         if not 0 <= args.retries <= 5:
             raise ValueError('--retries must be between 0 and 5')
-        pricing = Pricing(args.cache, args.currency, args.timeout, args.offline, retries=args.retries)
+        if args.offline and args.refresh:
+            raise ValueError('--refresh cannot be combined with --offline')
+        pricing = Pricing(args.cache, args.currency, args.timeout, args.offline, retries=args.retries, refresh=args.refresh)
         if args.clear_cache:
             pricing.clear()
             if args.plan is None and sys.stdin.isatty():

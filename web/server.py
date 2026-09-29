@@ -96,8 +96,12 @@ def evaluate(payload, transport=costguard.fetch, cache=None):
     limit = costguard.decimal(payload.get('max_increase','50'))
     if limit < 0:
         raise ValueError('Budget limit must be zero or greater')
+    offline = payload.get('offline') is True
+    refresh = payload.get('refresh') is True
+    if offline and refresh:
+        raise ValueError('Choose either cached-only or refresh prices from Azure.')
     pricing = costguard.Pricing(cache or ROOT / 'pricing_cache.db', currency, timeout=20,
-                                offline=payload.get('offline') is True, transport=transport)
+                                offline=offline, transport=transport, refresh=refresh)
     try:
         rows, warnings, skipped = costguard.analyze(plan, pricing)
         return costguard.summarize(rows, warnings, skipped, pricing, limit, strict=True)
