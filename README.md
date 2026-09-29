@@ -56,7 +56,7 @@ py scripts/capture_terraform_mock.py
 .\costguard.cmd --plan test-plans/terraform-azure-delete.json --offline --strict
 ```
 
-Warm those prices once with a live run before using `--offline`. The AzureRM test provider is mocked; this verifies Terraform's Azure change-plan shape, while applying to a live Azure subscription remains outside this demo.
+Warm those prices once with `py scripts/warm_cache.py` (or any live run) before using `--offline`. The AzureRM test provider is mocked; this verifies Terraform's Azure change-plan shape, while applying to a live Azure subscription remains outside this demo.
 
 ## Options and policy
 
@@ -73,11 +73,13 @@ Warm those prices once with a live run before using `--offline`. The AzureRM tes
 | `--strict` | Exit 2 when any changed resource cannot be priced completely |
 | `--timeout 10` | HTTP timeout in seconds |
 | `--retries 2` | Retry transient API timeouts and 429/5xx responses; default 2 |
-| `--markdown` | Render a Markdown table |
+| `--markdown` | Render pure Markdown (heading, breakdown table, summary table, verdict, warnings) for pull-request comments; no ASCII banner |
 | `--json` | Machine-readable results, exact decimal strings, meter records and query URLs |
 | `--group-by Team` | Additional delta totals grouped by a tag |
 
 Exit 0 means the known delta is within budget; exit 1 means it exceeds the budget; exit 2 means invalid input/operational error, or an incomplete estimate under `--strict`. Equality with the threshold passes. A known breach returns 1 even if other resources are unpriced. **Use `--strict` in deployment gates.** Offline uncached SKUs and network failures show the handout's `$0.00` fallback but retain an `INCOMPLETE` verdict; zero is a display default, not a known free price.
+
+The terminal report follows the handout's output contract: a resource breakdown table, a `FINANCIAL SUMMARY` (prior, projected, net impact and cache statistics) and a `POLICY VERDICT`. A breach prints `Status: FAILED (Exceeds budget allowance by +X.XX USD/mo)` followed by `[CIRCUIT BREAKER] CostGuard: Budget threshold breached. Deployment blocked.` The bundled `costguard.exe` prints byte-identical output to the Python engine on the warm-cache path, and an automated test enforces that.
 
 Calculations use decimal arithmetic and unrounded values for the threshold. Display values are rounded to two decimal places only at output. Totals describe changed, supported resources, not the full Azure bill or unchanged estate.
 
@@ -96,6 +98,7 @@ VM estimates cover compute meters only: embedded OS disks, network traffic, soft
 
 ```powershell
 py -m unittest discover -s tests -v
+py scripts/warm_cache.py
 py scripts/verify_live.py
 py scripts/benchmark.py
 py scripts/benchmark_native.py
@@ -103,7 +106,7 @@ powershell -ExecutionPolicy Bypass -File scripts/demo.ps1
 sqlite3 pricing_cache.db "SELECT region,currency,hourly_rate,cached_at FROM pricing_cache;"
 ```
 
-`verify_live.py` requires network access, clears its own verification cache, records real pricing evidence, and checks zero-network offline repeats. It leaves the normal CLI cache intact. `benchmark.py` measures the Python engine. `benchmark_native.py` measures complete Windows native process launches with a warmed cache and records each sample in `evidence/native-benchmark.json`. The executable can be rebuilt with `py scripts/build_fast.py` if GCC is installed; that script verifies the downloaded SQLite source checksum. `scripts/prepare_plans.py` regenerates the older **synthetic Terraform-format fixtures**. Unit tests use fake rates to test logic, while production pricing and `evidence/live-results.json` use the live API.
+`warm_cache.py` prices every bundled sample once from the live API into the normal `pricing_cache.db` and then proves a zero-request offline repeat; run it on the demo network before any cached-only demonstration. `verify_live.py` requires network access, clears its own verification cache, records real pricing evidence, and checks zero-network offline repeats. It leaves the normal CLI cache intact. `benchmark.py` measures the Python engine. `benchmark_native.py` measures complete Windows native process launches with a warmed cache and records each sample in `evidence/native-benchmark.json`. The executable can be rebuilt with `py scripts/build_fast.py` if GCC is installed; that script verifies the downloaded SQLite source checksum. `scripts/prepare_plans.py` regenerates the older **synthetic Terraform-format fixtures**. Unit tests use fake rates to test logic, while production pricing and `evidence/live-results.json` use the live API.
 
 See [REPORT.md](REPORT.md) for measured results and [COMPETITION.md](COMPETITION.md) for the preparation and judging walkthrough. The second complete native Windows run meets the 50 ms target on this machine; the Python-only CLI remains slower. Both measurements are recorded separately.
 

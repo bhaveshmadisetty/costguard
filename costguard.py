@@ -252,7 +252,9 @@ def analyze(plan, pricing, group_by=None):
                 costs.append(None); proofs.append(None)
         if problem:
             if problem.startswith(('Offline: no cached price', 'Network unavailable:')):
-                warnings.append(f'{address}: Network unavailable; defaulting SKU to $0.00. Estimate incomplete.')
+                reason = ('Offline mode, price not cached' if problem.startswith('Offline:')
+                          else 'Network unavailable')
+                warnings.append(f'{address}: {reason}; defaulting SKU to $0.00. Estimate incomplete.')
                 # Do not turn a partially priced update into a false saving.
                 costs = [Decimal(0), Decimal(0)]
             else:
@@ -276,60 +278,111 @@ def summarize(rows, warnings, skipped, pricing, limit, strict=False):
     delta = new-old
     code = 1 if delta > limit else (2 if warnings and strict else 0)
     verdict = 'FAILED' if delta > limit else ('INCOMPLETE' if warnings else 'PASSED')
+    overage = delta - limit if delta > limit else Decimal(0)
+    detail = (f'Exceeds budget allowance by +{money(overage)} {pricing.currency}/mo' if verdict == 'FAILED'
+              else 'Within budget allowance' if verdict == 'PASSED'
+              else 'Known delta within budget allowance; unpriced resources excluded')
     result = dict(currency=pricing.currency, prior=old, proposed=new, delta=delta, threshold=limit,
-                  status=verdict, exit_code=code, complete=not warnings, skipped=skipped,
-                  cache_hits=pricing.hits, api_calls=pricing.calls, warnings=warnings, resources=rows)
+                  overage=overage, status=verdict, status_detail=detail, exit_code=code,
+                  complete=not warnings, skipped=skipped, cache_hits=pricing.hits,
+                  api_calls=pricing.calls, warnings=warnings, resources=rows)
     return result
+
+
+CIRCUIT_BREAKER = '[CIRCUIT BREAKER] CostGuard: Budget threshold breached. Deployment blocked.'
+
+
+def signed(value):
+    return ('+' if value > 0 else '') + money(value)
 
 
 def render(rows, warnings, skipped, pricing, limit, markdown=False, group_by=None, json_mode=False, strict=False):
     result = summarize(rows,warnings,skipped,pricing,limit,strict)
-    old, new, delta, code, verdict = (result[k] for k in ('prior','proposed','delta','exit_code','status'))
+    old, new, delta, code, verdict, detail = (result[k] for k in ('prior','proposed','delta','exit_code','status','status_detail'))
     if json_mode:
         print(json.dumps(result, default=str, indent=2))
         return code
-    color = sys.stdout.isatty() and os.name != 'nt' and 'NO_COLOR' not in os.environ
-    green, red, amber, reset = (('\033[32m','\033[31m','\033[33m','\033[0m') if color else ('','','',''))
-    print('+' + '='*78 + '+')
-    print('| COSTGUARD  /  AZURE COST IMPACT CHECK' + ' '*39 + '|')
-    print('+' + '='*78 + '+')
-    print(f'  Monthly estimate in {pricing.currency}  |  VM runtime: 730 hours  |  Changed supported resources')
-    print()
-    print('COST BREAKDOWN')
-    headers = ['Resource Address','Action','Region','SKU / Meter',f'Old ({pricing.currency}/mo)',
-               f'New ({pricing.currency}/mo)',f'Delta ({pricing.currency}/mo)']
-    table = []
-    for row in rows:
-        table.append([row['address'],row['action'],row['region'],row['sku']] +
-                     [('UNKNOWN' if row[k] is None else ('+' if k=='delta' and row[k]>0 else '')+money(row[k])) for k in ('old','new','delta')])
+    cur = pricing.currency
+    headers = ['Resource Address','Action','Region','SKU / Meter',f'Old ({cur}/mo)',f'New ({cur}/mo)',f'Delta ({cur}/mo)']
+    table = [[row['address'],row['action'],row['region'],row['sku']] +
+             [('UNKNOWN' if row[k] is None else (signed if k=='delta' else money)(row[k])) for k in ('old','new','delta')]
+             for row in rows]
+    groups = []
+    if group_by:
+        for group in sorted({r['group'] for r in rows}):
+            total = sum((r['delta'] for r in rows if r['group']==group and r['delta'] is not None),Decimal(0))
+            groups.append((group, total))
+    cache = f'Cache: {pricing.hits} hits, {pricing.calls} API requests'
+    for warning in warnings:
+        print('[WARN] ' + warning, file=sys.stderr)
     if markdown:
+        # Pure Markdown for pasting into a pull-request comment: no ASCII banner.
         def escape(value):
             return str(value).replace('|','\\|').replace('\n',' ')
+        print('### CostGuard: Azure Infrastructure Cost Impact Report')
+        print()
+        print(f'Monthly estimate in {cur}. VM runtime 730 hours/month. Changed supported resources only.')
+        print()
         print('| ' + ' | '.join(headers) + ' |')
         print('| ' + ' | '.join(['---']*len(headers)) + ' |')
         for row in table:
             print('| ' + ' | '.join(map(escape,row)) + ' |')
-    else:
-        widths = [max(len(str(row[i])) for row in [headers]+table) for i in range(len(headers))]
-        print('  '.join(s.ljust(w) for s,w in zip(headers,widths)))
-        print('  '.join('-'*w for w in widths))
-        for row in table:
-            print('  '.join(str(s).ljust(w) for s,w in zip(row,widths)))
-    if group_by:
-        for group in sorted({r['group'] for r in rows}):
-            total = sum((r['delta'] for r in rows if r['group']==group and r['delta'] is not None),Decimal(0))
-            print(f'{group_by}={group}: {money(total)}/mo (known delta)')
-    print()
-    print('BUDGET DECISION')
+        if not table:
+            print('| _No billable changes_ |' + ' |'*(len(headers)-1))
+        print()
+        print('| Prior Monthly Total | Projected Monthly Total | Net Monthly Impact | Cache |')
+        print('| --- | --- | --- | --- |')
+        print(f'| {money(old)} {cur}/mo | {money(new)} {cur}/mo | {signed(delta)} {cur}/mo | {pricing.hits} hits, {pricing.calls} API requests |')
+        for group, total in groups:
+            print(f'- {escape(group_by)}={escape(group)}: {signed(total)} {cur}/mo (known delta)')
+        print()
+        print(f'**Policy verdict: {verdict}** ({detail}). Budget threshold {signed(limit)} {cur}/mo. Exit code {code}.')
+        if verdict == 'FAILED':
+            print()
+            print('> ' + CIRCUIT_BREAKER)
+        if warnings:
+            print()
+            print('**Warnings**')
+            print()
+            for warning in warnings:
+                print('- ' + escape(warning))
+            print()
+            print('_Totals include known costs only. Unpriced resources are not free; no complete budget assurance._')
+        return code
+    color = sys.stdout.isatty() and os.name != 'nt' and 'NO_COLOR' not in os.environ
+    green, red, amber, reset = (('\033[32m','\033[31m','\033[33m','\033[0m') if color else ('','','',''))
+    widths = [max(len(str(row[i])) for row in [headers]+table) for i in range(len(headers))]
+    rule = max(80, sum(widths) + 2*(len(widths)-1))
+    print('='*rule)
+    print('COSTGUARD: Azure Infrastructure Cost Impact Report')
+    print('='*rule)
+    print(f'Monthly estimate in {cur}  |  VM runtime: 730 hours/month  |  Changed supported resources')
+    print('-'*rule)
+    print('  '.join(s.ljust(w) for s,w in zip(headers,widths)))
+    print('  '.join('-'*w for w in widths))
+    for row in table:
+        print('  '.join(str(s).ljust(w) for s,w in zip(row,widths)))
+    if not table:
+        print('(no billable changes in this plan)')
+    print('-'*rule)
+    print('FINANCIAL SUMMARY')
+    print(f'  Prior Monthly Total:      {money(old)} {cur}/mo')
+    print(f'  Projected Monthly Total:  {money(new)} {cur}/mo')
+    print(f'  Net Monthly Impact:       {signed(delta)} {cur}/mo   [{cache}]')
+    print(f'  Skipped free/unchanged:   {skipped}')
+    for group, total in groups:
+        print(f'  {group_by}={group}: {signed(total)} {cur}/mo (known delta)')
+    print('-'*rule)
+    print('POLICY VERDICT')
     status_color = green if verdict == 'PASSED' else red if verdict == 'FAILED' else amber
-    print(f'  Status: {status_color}{verdict}{reset}  |  Exit code: {code}')
-    print(f'  Monthly impact: {money(delta)} {pricing.currency}  |  Budget limit: {money(limit)} {pricing.currency}')
-    print(f'  Prior: {money(old)} {pricing.currency}  |  Proposed: {money(new)} {pricing.currency}')
-    print(f'  Cache: {pricing.hits} hits, {pricing.calls} API requests  |  Skipped free/unchanged: {skipped}')
-    for warning in warnings:
-        print('[WARN] ' + warning, file=sys.stderr)
+    print(f'  Budget Threshold:  {signed(limit)} {cur}/mo')
+    print(f'  Status: {status_color}{verdict}{reset} ({detail})')
+    print(f'  Exit code: {code}')
+    if verdict == 'FAILED':
+        print(red + CIRCUIT_BREAKER + reset)
     if warnings:
         print('Totals include known costs only. Unpriced resources are not free; no complete budget assurance.')
+    print('='*rule)
     return code
 
 

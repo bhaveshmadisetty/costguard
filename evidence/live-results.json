@@ -1,16 +1,18 @@
 {
-  "verified_at": "2026-09-29T12:43:20.967898+00:00",
+  "verified_at": "2026-09-29T14:20:06.809856+00:00",
   "fixture_origin": "Synthetic Terraform-format fixtures; not generated from an Azure deployment",
   "results": [
     {
       "plan": "plan-a-small-add",
-      "elapsed_ms": 1158.142,
+      "elapsed_ms": 1200.767,
       "currency": "USD",
       "prior": "0",
       "proposed": "27.3020",
       "delta": "27.3020",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -54,7 +56,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "api"
             }
           ]
@@ -95,7 +97,7 @@
                 "armSkuName": "Premium_SSD_Managed_Disk_P10"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Storage%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+productName+eq+%27Premium+SSD+Managed+Disks%27+and+meterName+eq+%27P10+LRS+Disk%27&currencyCode=%27USD%27",
-              "cached_at": 1790685795,
+              "cached_at": 1790691602,
               "source": "api"
             }
           ]
@@ -104,13 +106,15 @@
     },
     {
       "plan": "03-upgrade",
-      "elapsed_ms": 961.671,
+      "elapsed_ms": 1048.957,
       "currency": "USD",
       "prior": "30.3680",
       "proposed": "70.080",
       "delta": "39.7120",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -153,7 +157,7 @@
                 "armSkuName": "Standard_B2s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B2s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685795,
+              "cached_at": 1790691603,
               "source": "api"
             },
             {
@@ -181,7 +185,7 @@
                 "armSkuName": "Standard_D2s_v3"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_D2s_v3%27&currencyCode=%27USD%27",
-              "cached_at": 1790685795,
+              "cached_at": 1790691603,
               "source": "api"
             }
           ]
@@ -190,13 +194,15 @@
     },
     {
       "plan": "02-delete",
-      "elapsed_ms": 144.919,
+      "elapsed_ms": 121.234,
       "currency": "USD",
       "prior": "7.5920",
       "proposed": "0",
       "delta": "-7.5920",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -239,7 +245,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "cache"
             },
             null
@@ -249,13 +255,15 @@
     },
     {
       "plan": "04-hostile-noise",
-      "elapsed_ms": 137.727,
+      "elapsed_ms": 143.613,
       "currency": "USD",
       "prior": "0",
       "proposed": "0",
       "delta": "0",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 15,
@@ -266,13 +274,15 @@
     },
     {
       "plan": "05-tags-only",
-      "elapsed_ms": 154.862,
+      "elapsed_ms": 111.698,
       "currency": "USD",
       "prior": "7.5920",
       "proposed": "7.5920",
       "delta": "0.0000",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -315,7 +325,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "cache"
             },
             {
@@ -343,7 +353,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "cache"
             }
           ]
@@ -352,13 +362,15 @@
     },
     {
       "plan": "06-replace",
-      "elapsed_ms": 133.111,
+      "elapsed_ms": 145.066,
       "currency": "USD",
       "prior": "7.5920",
       "proposed": "30.3680",
       "delta": "22.7760",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -401,7 +413,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "cache"
             },
             {
@@ -429,7 +441,7 @@
                 "armSkuName": "Standard_B2s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B2s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685795,
+              "cached_at": 1790691603,
               "source": "cache"
             }
           ]
@@ -438,13 +450,15 @@
     },
     {
       "plan": "07-downgrade",
-      "elapsed_ms": 148.653,
+      "elapsed_ms": 113.215,
       "currency": "USD",
       "prior": "30.3680",
       "proposed": "7.5920",
       "delta": "-22.7760",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -487,7 +501,7 @@
                 "armSkuName": "Standard_B2s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B2s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685795,
+              "cached_at": 1790691603,
               "source": "cache"
             },
             {
@@ -515,7 +529,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "cache"
             }
           ]
@@ -524,13 +538,15 @@
     },
     {
       "plan": "plan-b-upgrade-delete",
-      "elapsed_ms": 136.775,
+      "elapsed_ms": 107.999,
       "currency": "USD",
       "prior": "37.9600",
       "proposed": "70.080",
       "delta": "32.1200",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -573,7 +589,7 @@
                 "armSkuName": "Standard_B2s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B2s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685795,
+              "cached_at": 1790691603,
               "source": "cache"
             },
             {
@@ -601,7 +617,7 @@
                 "armSkuName": "Standard_D2s_v3"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_D2s_v3%27&currencyCode=%27USD%27",
-              "cached_at": 1790685795,
+              "cached_at": 1790691603,
               "source": "cache"
             }
           ]
@@ -641,7 +657,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "cache"
             },
             null
@@ -651,13 +667,15 @@
     },
     {
       "plan": "plan-a-small-add",
-      "elapsed_ms": 153.058,
+      "elapsed_ms": 130.732,
       "currency": "USD",
       "prior": "0",
       "proposed": "27.3020",
       "delta": "27.3020",
       "threshold": "20",
+      "overage": "7.3020",
       "status": "FAILED",
+      "status_detail": "Exceeds budget allowance by +7.30 USD/mo",
       "exit_code": 1,
       "complete": true,
       "skipped": 0,
@@ -701,7 +719,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "cache"
             }
           ]
@@ -742,7 +760,7 @@
                 "armSkuName": "Premium_SSD_Managed_Disk_P10"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Storage%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+productName+eq+%27Premium+SSD+Managed+Disks%27+and+meterName+eq+%27P10+LRS+Disk%27&currencyCode=%27USD%27",
-              "cached_at": 1790685795,
+              "cached_at": 1790691602,
               "source": "cache"
             }
           ]
@@ -751,13 +769,15 @@
     },
     {
       "plan": "01-create",
-      "elapsed_ms": 928.734,
+      "elapsed_ms": 587.748,
       "currency": "EUR",
       "prior": "0",
       "proposed": "6.4970",
       "delta": "6.4970",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -801,7 +821,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27EUR%27",
-              "cached_at": 1790685797,
+              "cached_at": 1790691605,
               "source": "api"
             }
           ]
@@ -810,13 +830,15 @@
     },
     {
       "plan": "01-create",
-      "elapsed_ms": 280.813,
+      "elapsed_ms": 190.416,
       "currency": "USD",
       "prior": "0",
       "proposed": "7.5920",
       "delta": "7.5920",
       "threshold": "50",
+      "overage": "0",
       "status": "PASSED",
+      "status_detail": "Within budget allowance",
       "exit_code": 0,
       "complete": true,
       "skipped": 0,
@@ -860,7 +882,7 @@
                 "armSkuName": "Standard_B1s"
               },
               "source_url": "https://prices.azure.com/api/retail/prices?%24filter=serviceName+eq+%27Virtual+Machines%27+and+armRegionName+eq+%27eastus%27+and+priceType+eq+%27Consumption%27+and+armSkuName+eq+%27Standard_B1s%27&currencyCode=%27USD%27",
-              "cached_at": 1790685794,
+              "cached_at": 1790691602,
               "source": "cache"
             }
           ]
@@ -870,21 +892,21 @@
   ],
   "cache_benchmark": {
     "runs": 10,
-    "median_ms": 248.474,
-    "min_ms": 224.221,
-    "max_ms": 483.871,
+    "median_ms": 118.513,
+    "min_ms": 110.974,
+    "max_ms": 169.073,
     "scope": "Fresh Python subprocess, full CLI JSON output, offline cache, excludes py launcher",
     "samples_ms": [
-      224.221,
-      280.669,
-      247.072,
-      235.356,
-      261.131,
-      249.303,
-      247.645,
-      254.861,
-      239.419,
-      483.871
+      159.569,
+      110.974,
+      169.073,
+      131.729,
+      117.215,
+      115.325,
+      119.811,
+      111.422,
+      115.35,
+      123.115
     ]
   }
 }

@@ -182,6 +182,36 @@ class CostGuardTests(unittest.TestCase):
             self.assertEqual(c.render(rows,[],0,p,Decimal('7.30')),0)
             self.assertEqual(c.render(rows,[],0,p,Decimal('7.29')),1)
             self.assertEqual(c.render([],['unknown'],0,p,Decimal('50'),strict=True),2)
+    def test_terminal_report_follows_handout_contract(self):
+        p=self.pricing(); rows,_,_=c.analyze({'resource_changes':[resource(['create'],None,vm())]},p,'Team')
+        def capture(**kw):
+            out=io.StringIO()
+            with contextlib.redirect_stdout(out),contextlib.redirect_stderr(io.StringIO()):
+                code=c.render(rows,[],0,p,Decimal('7.29'),**kw)
+            return code,out.getvalue()
+        code,text=capture()
+        self.assertEqual(code,1)
+        for expected in ('COSTGUARD: Azure Infrastructure Cost Impact Report','FINANCIAL SUMMARY','POLICY VERDICT',
+                         'Net Monthly Impact:       +7.30 USD/mo','Budget Threshold:  +7.29 USD/mo',
+                         'Status: FAILED (Exceeds budget allowance by +0.01 USD/mo)',c.CIRCUIT_BREAKER):
+            self.assertIn(expected,text)
+        out=io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(c.render(rows,[],0,p,Decimal('7.30')),0)
+        self.assertIn('Status: PASSED (Within budget allowance)',out.getvalue())
+        self.assertNotIn('CIRCUIT BREAKER',out.getvalue())
+        code,markdown=capture(markdown=True,group_by='Team')
+        self.assertEqual(code,1)
+        self.assertTrue(markdown.startswith('### CostGuard'))
+        self.assertNotIn('====',markdown)
+        self.assertIn('| azurerm_linux_virtual_machine.app | CREATE | eastus | Standard_B1s | 0.00 | 7.30 | +7.30 |',markdown)
+        self.assertIn('**Policy verdict: FAILED**',markdown)
+        self.assertIn('> '+c.CIRCUIT_BREAKER,markdown)
+        self.assertIn('Team=(untagged): +7.30 USD/mo',markdown)
+    def test_offline_warning_names_offline_mode(self):
+        rows,warnings,_=self.analyze(self.pricing(offline=True),resource(['create'],None,vm()))
+        self.assertEqual(rows[0]['delta'],Decimal(0))
+        self.assertTrue(warnings[0].startswith('azurerm_linux_virtual_machine.app: Offline mode, price not cached; defaulting SKU to $0.00'))
     def test_invalid_json_missing_file_and_nan(self):
         path=self.folder/'bad.json'; path.write_text('{bad')
         with contextlib.redirect_stderr(io.StringIO()):

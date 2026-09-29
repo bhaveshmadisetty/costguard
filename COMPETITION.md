@@ -4,7 +4,7 @@
 
 Confirm whether prewritten implementation code is permitted. The handout explicitly permits environment setup and preparation of test plans; it does not explicitly authorize bringing a completed implementation. Treat this repository as preparation/reference until the organizer confirms the rules.
 
-Run the live demo on the exact laptop and network you will use. Activate the local tools using `. .\activate.ps1`. Understand `costguard.py` well enough to explain its filters, cache identity, units, action matrix and exit codes. Keep the cache warm for an offline backup, but use `--refresh` or the website's fresh-prices option to demonstrate a live lookup. Cached prices are returned immediately by default, in line with the handout.
+Run `py scripts/warm_cache.py` on the demo network so every sample, in USD, EUR, GBP and INR, completes in cached-only mode; without it the upgrade, replace and downsize samples show `INCOMPLETE` when "Use cached prices only" is ticked. Run the live demo on the exact laptop and network you will use. Activate the local tools using `. .\activate.ps1`. Understand `costguard.py` well enough to explain its filters, cache identity, units, action matrix and exit codes. Keep the cache warm for an offline backup, but use `--refresh` or the website's fresh-prices option to demonstrate a live lookup. Cached prices are returned immediately by default, in line with the handout.
 
 ## Build priorities (100 marks)
 
@@ -40,7 +40,7 @@ Run the live demo on the exact laptop and network you will use. Activate the loc
    echo %ERRORLEVEL%
    ```
 
-   The first command passes; the second prints `FAILED` and exits 1.
+   The first command passes; the second prints `Status: FAILED (Exceeds budget allowance by +7.30 USD/mo)`, the `[CIRCUIT BREAKER]` line, and exits 1. Both commands print the same layout whether the native exe or the Python engine answers.
 4. Turn on "Use cached prices only" in the website and repeat. Show two cache hits and zero API calls.
 5. Select the Terraform-generated Azure create, upgrade and deletion samples. Explain that Terraform's planner produced them with a mocked AzureRM provider, so no subscription was needed. Then show downsize, tags-only and hostile-noise examples.
 6. Expand "Pricing evidence" to show a specific meter ID, Azure query URL, unit and rate.
@@ -56,7 +56,7 @@ Use `scripts/demo.ps1` for the repeatable walkthrough. Avoid spending the demo o
 - **What if new size is unknown?** Mark the estimate incomplete, never turn a missing new price into false savings.
 - **Why SQLite?** Persistent local cache between CLI launches; inspectable, no external service.
 - **Does it predict the full invoice?** No. It estimates retail recurring cost for supported changed resources under stated usage assumptions.
-- **Is it under 50 ms?** The second complete native Windows launch measured 11.908 ms here. Re-run the benchmark on the judging machine; the Python fallback is slower.
+- **Is it under 50 ms?** The second complete native Windows launch measured 10.998 ms here. Re-run the benchmark on the judging machine; the Python fallback is slower.
 - **Are the Azure plans real?** Terraform generated create, update and delete plans for actual AzureRM resource schemas. The provider was mocked, so no live Azure infrastructure was provisioned.
 
 ## Submission checklist

@@ -26,3 +26,18 @@ class WindowsLauncherTests(unittest.TestCase):
             self.assertIn('Status: INCOMPLETE', result.stdout)
         finally:
             cache.unlink(missing_ok=True)
+
+    def test_native_and_python_reports_are_identical(self):
+        """The exe fast path must print exactly what costguard.py prints for a warm-cache plan."""
+        plan = ROOT / 'test-plans' / 'terraform-azure-create.json'
+        for limit, expected in (('50', 0), ('20', 1)):
+            args = ['--plan', str(plan), '--offline', '--strict', '--max-increase', limit]
+            native = subprocess.run([str(ROOT / 'costguard.exe'), *args], cwd=ROOT, capture_output=True, text=True)
+            python = subprocess.run([sys.executable, str(ROOT / 'costguard.py'), *args], cwd=ROOT, capture_output=True, text=True)
+            if python.returncode == 2:
+                self.skipTest('Warm the cache first: py scripts/warm_cache.py')
+            self.assertEqual((native.returncode, python.returncode), (expected, expected), native.stdout + python.stderr)
+            self.assertIn('Cache: 2 hits, 0 API requests', native.stdout)
+            self.assertEqual(native.stdout, python.stdout)
+            if expected == 1:
+                self.assertIn('[CIRCUIT BREAKER]', native.stdout)

@@ -2,7 +2,7 @@
 
 ## 1. What We Built
 
-CostGuard is a Python CLI and local browser app that consume Terraform plan JSON and estimate the monthly cost change for supported Azure resources. They retrieve actual Azure Retail Prices API meters, filter the pricing model and resource attributes, and store successful responses in SQLite. The shared engine calculates create, delete, update and replacement deltas with decimal arithmetic, using 730 hours for hourly compute and native monthly units for managed disks. A Windows executable provides a fast path for supported warm-cache CLI plans and delegates cache misses or advanced options to Python. The CLI prints a terminal table and budget verdict with CI exit codes; the browser page adds sample selection, file upload, budget controls, resource breakdown and pricing evidence. The second complete native Windows run meets 50 ms on this machine. Supported-resource scope remains narrower than a complete Azure bill.
+CostGuard is a Python CLI and local browser app that consume Terraform plan JSON and estimate the monthly cost change for supported Azure resources. They retrieve actual Azure Retail Prices API meters, filter the pricing model and resource attributes, and store successful responses in SQLite. The shared engine calculates create, delete, update and replacement deltas with decimal arithmetic, using 730 hours for hourly compute and native monthly units for managed disks. A Windows executable provides a fast path for supported warm-cache CLI plans and delegates cache misses or advanced options to Python. The CLI prints the handout's terminal contract (breakdown table, financial summary, policy verdict and a circuit-breaker line on a breach) with CI exit codes; the browser page adds sample selection, file upload, budget controls, resource breakdown and pricing evidence. The second complete native Windows run meets 50 ms on this machine. Supported-resource scope remains narrower than a complete Azure bill.
 
 ## 2. Detection & Extraction Logic
 
@@ -57,11 +57,11 @@ An actual Terraform 1.16.4 output-only configuration was planned to a binary, co
 
 | Measurement | Runs | Median | Maximum |
 |---|---:|---:|---:|
-| Fresh Python process, full JSON report, offline cache; excludes `py` launcher | 10 | 248.474 ms | 483.871 ms |
-| In-process `main`, argument parsing, file read, SQLite, math, terminal rendering | 20 | 1.799 ms | 2.582 ms |
-| Complete native Windows launch, Terraform-generated Azure create plan, cached report | 30 | 11.311 ms | 19.023 ms |
+| Fresh Python process, full JSON report, offline cache; excludes `py` launcher | 10 | 118.513 ms | 169.073 ms |
+| In-process `main`, argument parsing, file read, SQLite, math, terminal rendering | 20 | 0.988 ms | 1.343 ms |
+| Complete native Windows launch, Terraform-generated Azure create plan, cached report | 30 | 15.040 ms | 24.239 ms |
 
-The **second complete native run was 11.908 ms**, below 50 ms on this Windows machine. All 30 measured native runs were below 50 ms; this includes process launch, plan read, SQLite lookups, cost math and terminal output. The Python-only process remains above 50 ms, so use `costguard.exe` (selected by `costguard.cmd`) for the timed warm-cache demonstration. Zero HTTP calls on this path is met. Machine load can affect individual timings. Raw samples are in `evidence/native-benchmark.json`; Python measurements remain in the earlier evidence files.
+The **second complete native run was 10.998 ms**, below 50 ms on this Windows machine. All 30 measured native runs were below 50 ms; this includes process launch, plan read, SQLite lookups, cost math and terminal output. The Python-only process remains above 50 ms, so use `costguard.exe` (selected by `costguard.cmd`) for the timed warm-cache demonstration. Zero HTTP calls on this path is met. The native and Python reports are byte-identical on this path; `tests/test_windows_launcher.py` enforces it. Machine load can affect individual timings. Raw samples are in `evidence/native-benchmark.json`; Python measurements remain in the earlier evidence files.
 
 ## 5. Limitations & Next Steps
 
@@ -69,7 +69,7 @@ The **second complete native run was 11.908 ms**, below 50 ms on this Windows ma
 2. Support embedded OS disks, additional storage classes, usage-based networking, discounts and more resource families. Current totals cover supported changed resources only.
 3. Validate against an authenticated Azure `terraform show -json` plan if the organizer supplies credentials and infrastructure. The included Azure lifecycle plans came from Terraform's AzureRM provider mock; no Azure resources were provisioned.
 4. Cache has no expiry by default, matching the handout's cache-first rule. Opt-in `--auto-refresh-hours 24` or manual `--refresh` updates saved prices; a failed refresh reuses an existing saved rate with a warning.
-5. Offline uncached and network-unavailable SKUs display `$0.00` as requested, with an explicit warning and `INCOMPLETE` verdict. Default mode exits 0 if no known budget breach; `--strict` exits 2. An unknown SKU for other reasons remains unpriced. Never treat the displayed zero as evidence that a SKU is free.
+5. Offline uncached and network-unavailable SKUs display `$0.00` as requested, with an explicit warning that names the actual cause (offline mode versus network failure) and an `INCOMPLETE` verdict. Default mode exits 0 if no known budget breach; `--strict` exits 2. An unknown SKU for other reasons remains unpriced. Never treat the displayed zero as evidence that a SKU is free.
 6. Disk inclusion is ambiguous in the handout; this implementation covers Plan A's P10 Premium disk, using Microsoft's actual monthly unit.
 7. Tag grouping uses proposed tags (prior tags for deletion); it is not a full reallocation ledger for moves between teams.
 8. Windows and explicit Spot selection have automated fixture tests; the recorded live integration evidence covers regular Linux compute and Premium disk pricing.
@@ -83,6 +83,7 @@ For the local web interface, double-click `Run-CostGuard.bat` and keep its termi
 
 ```powershell
 py -m unittest discover -s tests -v
+py scripts/warm_cache.py
 .\costguard.cmd --plan test-plans/plan-a-small-add.json --strict
 .\costguard.cmd --plan test-plans/plan-a-small-add.json --offline --strict
 .\costguard.cmd --plan test-plans/plan-b-upgrade-delete.json --max-increase 25 --strict

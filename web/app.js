@@ -83,7 +83,7 @@ function showReport(data) {
   $('verdict-message').textContent = data.status === 'PASSED'
     ? 'The known monthly increase is within the limit you set.'
     : data.status === 'FAILED'
-      ? `The projected increase exceeds your ${formatMoney(data.threshold, data.currency)} monthly limit. A CI check would exit with code 1.`
+      ? `The projected increase exceeds your ${formatMoney(data.threshold, data.currency)} monthly limit by ${formatMoney(data.overage, data.currency)}. Circuit breaker: deployment blocked. A CI check would exit with code 1.`
       : 'One or more prices could not be determined. A strict CI check would exit with code 2.';
   $('prior-cost').textContent = formatMoney(data.prior, data.currency);
   $('new-cost').textContent = formatMoney(data.proposed, data.currency);

@@ -183,6 +183,10 @@ static int state_price(const char *kind,const char *state,const char *currency,i
 }
 
 static int unknown_after(const char *resource) {
+    char *whole=field(resource,"$.change.after_unknown");
+    int all_unknown=whole && !strcmp(whole,"1");   /* after_unknown: true for the entire object */
+    free(whole);
+    if (all_unknown) return 1;
     const char *attrs[]={"size","vm_size","location","disk_size_gb","storage_account_type","priority",NULL};
     for (int i=0;attrs[i];i++) {
         char path[96];
@@ -346,6 +350,7 @@ int main(int argc,char **argv) {
         if ((!create && !state_price(kind,before,currency,&row.old_cost,&r1,&s1)) ||
             (!remove && !state_price(kind,after,currency,&row.new_cost,&r2,&s2))) bad=1;
         if (!row.address || !simple(currency)) bad=1;
+        for (const char *ch=row.address?row.address:"";*ch;ch++) if ((unsigned char)*ch>=0x80) bad=1;
         row.region=copy(r2?r2:r1);row.sku=copy(s2?s2:s1);
         if (r1 && r2 && strcmp(r1,r2)) bad=1;
         if (s1 && s2 && strcmp(s1,s2)) {
@@ -368,31 +373,71 @@ int main(int argc,char **argv) {
     sqlite3_finalize(q);
     if (bad) return python_fallback(argc,argv);
     int64_t delta=new_total-old_total;
-    char old[64],now[64],diff[64],budget[64];
+    char old[64],now[64],diff[64],budget[64],impact[68],threshold_text[68],overage[96];
     amount(old_total,old,sizeof(old));amount(new_total,now,sizeof(now));amount(delta,diff,sizeof(diff));amount(limit,budget,sizeof(budget));
+    snprintf(impact,sizeof(impact),"%s%s",delta>0?"+":"",diff);
+    snprintf(threshold_text,sizeof(threshold_text),"%s%s",limit>0?"+":"",budget);
     int colors=enable_colors();
     const char *green=colors?"\x1b[32m":"",*red=colors?"\x1b[31m":"",*reset=colors?"\x1b[0m":"";
-    const char *status=delta>limit?"FAILED":"PASSED";
-    printf("+==============================================================================+\n");
-    printf("| COSTGUARD  /  AZURE COST IMPACT CHECK                                       |\n");
-    printf("+==============================================================================+\n");
-    printf("  Monthly estimate in %s  |  VM runtime: 730 hours  |  Changed supported resources\n\n",currency);
-    printf("COST BREAKDOWN\n");
-    printf("%-39s  %-7s  %-12s  %-35s %10s %10s %10s\n","Resource Address","Action","Region","SKU / Meter","Old/mo","New/mo","Delta/mo");
+    int failed=delta>limit;
+    /* Column widths and layout mirror render() in costguard.py exactly. */
+    char head_old[32],head_new[32],head_delta[32];
+    snprintf(head_old,sizeof(head_old),"Old (%s/mo)",currency);
+    snprintf(head_new,sizeof(head_new),"New (%s/mo)",currency);
+    snprintf(head_delta,sizeof(head_delta),"Delta (%s/mo)",currency);
+    const char *headers[7]={"Resource Address","Action","Region","SKU / Meter",head_old,head_new,head_delta};
+    size_t widths[7];
+    for (int i=0;i<7;i++) widths[i]=strlen(headers[i]);
+    char (*cells)[3][68]=(char (*)[3][68])calloc((size_t)(count?count:1),sizeof(*cells));
+    if (!cells) return python_fallback(argc,argv);
     for (int i=0;i<count;i++) {
-        char a[64],b[64],c[64];
-        amount(rows[i].old_cost,a,sizeof(a));amount(rows[i].new_cost,b,sizeof(b));amount(rows[i].new_cost-rows[i].old_cost,c,sizeof(c));
-        char signed_delta[68];
-        snprintf(signed_delta,sizeof(signed_delta),"%s%s",rows[i].new_cost>rows[i].old_cost?"+":"",c);
-        printf("%-39s  %-7s  %-12s  %-35s %10s %10s %10s\n",rows[i].address,rows[i].action,
-               rows[i].region,rows[i].sku,a,b,signed_delta);
+        char d[64];
+        amount(rows[i].old_cost,cells[i][0],64);amount(rows[i].new_cost,cells[i][1],64);
+        amount(rows[i].new_cost-rows[i].old_cost,d,sizeof(d));
+        snprintf(cells[i][2],68,"%s%s",rows[i].new_cost>rows[i].old_cost?"+":"",d);
+        const char *text[7]={rows[i].address,rows[i].action,rows[i].region,rows[i].sku,cells[i][0],cells[i][1],cells[i][2]};
+        for (int j=0;j<7;j++) if (strlen(text[j])>widths[j]) widths[j]=strlen(text[j]);
     }
-    printf("\nBUDGET DECISION\n");
-    printf("  Status: %s%s%s  |  Exit code: %d\n",delta>limit?red:green,status,reset,delta>limit?1:0);
-    char signed_impact[68];
-    snprintf(signed_impact,sizeof(signed_impact),"%s%s",delta>0?"+":"",diff);
-    printf("  Monthly impact: %s %s  |  Budget limit: %s %s\n",signed_impact,currency,budget,currency);
-    printf("  Prior: %s %s  |  Proposed: %s %s\n",old,currency,now,currency);
-    printf("  Cache: %d hits, 0 API requests  |  Skipped free/unchanged: %d\n",hits,skipped);
-    return delta>limit?1:0;
+    size_t rule=0;
+    for (int i=0;i<7;i++) rule+=widths[i];
+    rule+=2*6;
+    if (rule<80) rule=80;
+    char *line=(char*)malloc(rule+1);
+    if (!line) { free(cells);return python_fallback(argc,argv); }
+    memset(line,'=',rule);line[rule]=0;
+    printf("%s\nCOSTGUARD: Azure Infrastructure Cost Impact Report\n%s\n",line,line);
+    printf("Monthly estimate in %s  |  VM runtime: 730 hours/month  |  Changed supported resources\n",currency);
+    memset(line,'-',rule);
+    printf("%s\n",line);
+    for (int j=0;j<7;j++) printf("%s%-*s",j?"  ":"",(int)widths[j],headers[j]);
+    printf("\n");
+    for (int j=0;j<7;j++) { if (j) printf("  "); for (size_t k=0;k<widths[j];k++) putchar('-'); }
+    printf("\n");
+    for (int i=0;i<count;i++) {
+        const char *text[7]={rows[i].address,rows[i].action,rows[i].region,rows[i].sku,cells[i][0],cells[i][1],cells[i][2]};
+        for (int j=0;j<7;j++) printf("%s%-*s",j?"  ":"",(int)widths[j],text[j]);
+        printf("\n");
+    }
+    if (!count) printf("(no billable changes in this plan)\n");
+    printf("%s\n",line);
+    printf("FINANCIAL SUMMARY\n");
+    printf("  Prior Monthly Total:      %s %s/mo\n",old,currency);
+    printf("  Projected Monthly Total:  %s %s/mo\n",now,currency);
+    printf("  Net Monthly Impact:       %s %s/mo   [Cache: %d hits, 0 API requests]\n",impact,currency,hits);
+    printf("  Skipped free/unchanged:   %d\n",skipped);
+    printf("%s\n",line);
+    printf("POLICY VERDICT\n");
+    printf("  Budget Threshold:  %s %s/mo\n",threshold_text,currency);
+    if (failed) {
+        char over[64];
+        amount(delta-limit,over,sizeof(over));
+        snprintf(overage,sizeof(overage),"Exceeds budget allowance by +%s %s/mo",over,currency);
+        printf("  Status: %sFAILED%s (%s)\n",red,reset,overage);
+    } else printf("  Status: %sPASSED%s (Within budget allowance)\n",green,reset);
+    printf("  Exit code: %d\n",failed?1:0);
+    if (failed) printf("%s[CIRCUIT BREAKER] CostGuard: Budget threshold breached. Deployment blocked.%s\n",red,reset);
+    memset(line,'=',rule);
+    printf("%s\n",line);
+    free(line);free(cells);
+    return failed?1:0;
 }

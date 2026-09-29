@@ -11,10 +11,12 @@ test_malformed_structure (test_costguard.CostGuardTests.test_malformed_structure
 test_network_offline_and_unknown (test_costguard.CostGuardTests.test_network_offline_and_unknown) ... ok
 test_no_partial_update_savings (test_costguard.CostGuardTests.test_no_partial_update_savings) ... ok
 test_no_retry_for_missing_meter (test_costguard.CostGuardTests.test_no_retry_for_missing_meter) ... ok
+test_offline_warning_names_offline_mode (test_costguard.CostGuardTests.test_offline_warning_names_offline_mode) ... ok
 test_pagination_and_ambiguity (test_costguard.CostGuardTests.test_pagination_and_ambiguity) ... ok
 test_policy_exact_boundary_and_strict (test_costguard.CostGuardTests.test_policy_exact_boundary_and_strict) ... ok
 test_regional_standard_meter_need_not_be_primary (test_costguard.CostGuardTests.test_regional_standard_meter_need_not_be_primary) ... ok
 test_stdin_and_file_equivalence (test_costguard.CostGuardTests.test_stdin_and_file_equivalence) ... ok
+test_terminal_report_follows_handout_contract (test_costguard.CostGuardTests.test_terminal_report_follows_handout_contract) ... ok
 test_terraform_output_only_plan (test_costguard.CostGuardTests.test_terraform_output_only_plan) ... ok
 test_transient_timeout_retries_then_caches (test_costguard.CostGuardTests.test_transient_timeout_retries_then_caches) ... ok
 test_unknown_after_and_noise (test_costguard.CostGuardTests.test_unknown_after_and_noise) ... ok
@@ -24,9 +26,11 @@ test_create_upgrade_delete_from_terraform (test_terraform_plans.TerraformPlansTe
 test_local_http_page_and_analyze (test_web.WebTests.test_local_http_page_and_analyze) ... ok
 test_sample_uses_live_price_and_then_cache (test_web.WebTests.test_sample_uses_live_price_and_then_cache) ... ok
 test_upload_and_invalid_budget (test_web.WebTests.test_upload_and_invalid_budget) ... ok
+test_native_and_python_reports_are_identical (test_windows_launcher.WindowsLauncherTests.test_native_and_python_reports_are_identical)
+The exe fast path must print exactly what costguard.py prints for a warm-cache plan. ... ok
 test_offline_uncached_fallback_preserves_strict_exit_code (test_windows_launcher.WindowsLauncherTests.test_offline_uncached_fallback_preserves_strict_exit_code) ... ok
 
 ----------------------------------------------------------------------
-Ran 27 tests in 2.235s
+Ran 30 tests in 2.498s
 
 OK
