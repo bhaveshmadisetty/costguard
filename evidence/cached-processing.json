@@ -1,0 +1,28 @@
+{
+  "scope": "In-process main(): argument parsing, file, SQLite, pricing math, rendering; excludes interpreter startup",
+  "runs": 20,
+  "median_ms": 2.396,
+  "max_ms": 27.162,
+  "samples_ms": [
+    27.162,
+    4.156,
+    3.695,
+    4.015,
+    1.686,
+    2.624,
+    3.945,
+    3.825,
+    2.761,
+    2.128,
+    1.72,
+    2.412,
+    1.994,
+    2.166,
+    2.676,
+    1.528,
+    1.404,
+    2.38,
+    1.476,
+    2.242
+  ]
+}

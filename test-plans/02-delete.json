@@ -1,0 +1,28 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.9.0",
+  "resource_changes": [
+    {
+      "address": "azurerm_linux_virtual_machine.old",
+      "mode": "managed",
+      "type": "azurerm_linux_virtual_machine",
+      "name": "old",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "delete"
+        ],
+        "before": {
+          "size": "Standard_B1s",
+          "location": "eastus",
+          "tags": {
+            "Team": "platform",
+            "Environment": "dev"
+          }
+        },
+        "after": null,
+        "after_unknown": {}
+      }
+    }
+  ]
+}

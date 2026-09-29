@@ -1,0 +1,12 @@
+{
+  "terraform": {
+    "url": "https://releases.hashicorp.com/terraform/1.16.4/terraform_1.16.4_windows_amd64.zip",
+    "checksum": "5c736ed6b0f13e98bc5029fe159574cca33634c3477466c56442c28b513a7054",
+    "algorithm": "sha256"
+  },
+  "sqlite": {
+    "url": "https://www.sqlite.org/2026/sqlite-tools-win-x64-3530400.zip",
+    "checksum": "88b4659fe747896b853af10157316b4ade143553efb89c1c8ca7423a278dcc8b",
+    "algorithm": "sha3_256"
+  }
+}

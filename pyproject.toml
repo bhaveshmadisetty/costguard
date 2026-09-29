@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "costguard-plan"
+version = "1.0.0"
+description = "Azure Terraform plan cost guardrail"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+costguard = "costguard:main"
+
+[tool.setuptools]
+py-modules = ["costguard"]

@@ -1,0 +1,276 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.9.0",
+  "resource_changes": [
+    {
+      "address": "azurerm_resource_group.noise0",
+      "mode": "managed",
+      "type": "azurerm_resource_group",
+      "name": "noise0",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise0",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_virtual_network.noise1",
+      "mode": "managed",
+      "type": "azurerm_virtual_network",
+      "name": "noise1",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise1",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_network_security_group.noise2",
+      "mode": "managed",
+      "type": "azurerm_network_security_group",
+      "name": "noise2",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise2",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_subnet.noise3",
+      "mode": "managed",
+      "type": "azurerm_subnet",
+      "name": "noise3",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise3",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_resource_group.noise4",
+      "mode": "managed",
+      "type": "azurerm_resource_group",
+      "name": "noise4",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise4",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_virtual_network.noise5",
+      "mode": "managed",
+      "type": "azurerm_virtual_network",
+      "name": "noise5",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise5",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_network_security_group.noise6",
+      "mode": "managed",
+      "type": "azurerm_network_security_group",
+      "name": "noise6",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise6",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_subnet.noise7",
+      "mode": "managed",
+      "type": "azurerm_subnet",
+      "name": "noise7",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise7",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_resource_group.noise8",
+      "mode": "managed",
+      "type": "azurerm_resource_group",
+      "name": "noise8",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise8",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_virtual_network.noise9",
+      "mode": "managed",
+      "type": "azurerm_virtual_network",
+      "name": "noise9",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise9",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_network_security_group.noise10",
+      "mode": "managed",
+      "type": "azurerm_network_security_group",
+      "name": "noise10",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise10",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_subnet.noise11",
+      "mode": "managed",
+      "type": "azurerm_subnet",
+      "name": "noise11",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise11",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_resource_group.noise12",
+      "mode": "managed",
+      "type": "azurerm_resource_group",
+      "name": "noise12",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise12",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_virtual_network.noise13",
+      "mode": "managed",
+      "type": "azurerm_virtual_network",
+      "name": "noise13",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise13",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_network_security_group.noise14",
+      "mode": "managed",
+      "type": "azurerm_network_security_group",
+      "name": "noise14",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "name": "noise14",
+          "location": "eastus"
+        },
+        "after_unknown": {}
+      }
+    }
+  ]
+}
